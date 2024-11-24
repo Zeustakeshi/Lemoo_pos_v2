@@ -1,0 +1,324 @@
+﻿@{
+    Layout = "_LayoutHome";
+}
+
+
+<div class="container-fluid add-form-list">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <div class="header-title">
+                        <h4 class="card-title">Thêm sản phẩm</h4>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form action="page-list-product.html" data-toggle="validator">
+                        <div class="row">
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Tên sản phẩm *</label>
+                                    <input type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Mã sản phẩm/ SKU *</label>
+                                    <input type="text" class="form-control" placeholder="Sku code"  required>
+                                    <div class="help-block with-errors"></div>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Barcode </label>
+                                    <input type="text" class="form-control" placeholder="Barcode" >
+                                    <div class="help-block with-errors"></div>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Khối lượng *</label>
+                                    <input type="number" class="form-control" placeholder="g">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Đơn vị tính *</label>
+                                    <input type="text" class="form-control" placeholder="đơn vị">
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label> Mô tả sản phẩm </label>
+                                        <div id="quill-tool">
+                                            <button class="ql-bold" data-toggle="tooltip" data-placement="bottom" title="Bold"></button>
+                                            <button class="ql-underline" data-toggle="tooltip" data-placement="bottom" title="Underline"></button>
+                                            <button class="ql-italic" data-toggle="tooltip" data-placement="bottom" title="Add italic text <cmd+i>"></button>
+                                            <button class="ql-image" data-toggle="tooltip" data-placement="bottom" title="Upload image"></button>
+                                            <button class="ql-code-block" data-toggle="tooltip" data-placement="bottom" title="Show code"></button>
+                                        </div>
+                                        <div id="quill-toolbar">
+                                        </div>
+                                    </div>
+                             </div> 
+                           
+                            
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Ảnh bìa sản phẩm</label>
+                                    <input  type="file" class="form-control image-file" name="pic" accept="image/*">
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Biến thể sản phẩm</label>
+                                    <div >
+                                        <button id="btn-add-variant" type="button" class="btn btn-outline-primary mt-2">Thêm biến thể</button>
+
+                                        <div id="variant-container">
+                                            
+
+                                        </div>
+
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <p class="my-3">Danh sách hàng hóa cùng loại</p>
+                                            <button id="btn-sync-variant" type="button" class="btn ">
+                                                <i class="fa-solid fa-rotate"></i>
+                                            </button>
+                                        </div>
+                                        <div id="variant-table">
+
+                                        </div>
+                                      
+
+                                    </div>
+                                </div>
+                            </div>
+
+
+                        </div>
+                        <button type="submit" class="btn btn-primary mr-2 ">Thêm sản phẩm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Page end  -->
+</div>
+
+
+
+
+<script>
+    const variants = {};
+    const buttonAddVariant = document.getElementById("btn-add-variant")
+    const variantContainer = document.getElementById("variant-container")
+   
+
+    
+
+    const handleRemoveAttribute = (index) => {
+        variantContainer.removeChild(document.getElementById(`product-variant-${index}`))
+        delete variants[`product-variants-${index}`]
+   
+    }
+
+    const handleRemoveVariant = (containerIndex, index) => {
+        const container = document.getElementById(`product-variants-${containerIndex}`);
+       
+        if (container.children.length <= 6) {
+            container.children[container.children.length - 2].classList.remove("d-none")
+        }
+
+        if (container.children.length <= 3) {
+            return;
+        }
+
+        delete variants[`product-variants-${containerIndex}`]["variants"][index];
+
+
+        container.removeChild(document.getElementById(`variant-${index}-${containerIndex}`))
+    }
+
+
+    const handleChangeVariant = (e, key, variantId) => {
+
+        const value = e.target.value;
+
+        variants[key] = {
+            ...variants[key],
+            variants: {
+                ...variants[key].variants,
+                [variantId]: value
+            }
+        }
+    }
+
+
+    const handleAddVariant = (index) => {
+        const container = document.getElementById(`product-variants-${index}`);
+        if (container.children.length >= 6) {
+            container.children[container.children.length - 2].classList.add("d-none")
+            return;
+        } else {
+            container.children[container.children.length - 2].classList.remove("d-none")
+        }
+       
+        container.insertAdjacentHTML("afterbegin", `
+                           <div class = "my-2 d-flex" id = "variant-${container.children.length}-${index}">
+                                            <input onChange = "handleChangeVariant(event, 'product-variants-${index}', ${container.children.length} )" autofocus type="text" class="form-control " placeholder="Biến thể">
+                                    <button onClick = "handleRemoveVariant('${index}' ,${container.children.length})" type="button" class="btn btn-outline-warning">xóa</button>
+                   </div>
+        `)
+    }
+
+    const handleChangeAttributeName = (e, key) => {
+        const value = e.target.value;
+
+        variants[key] = {
+            ...variants[key],
+            name: value,
+        }
+    }
+
+
+    buttonAddVariant.addEventListener("click", ()=> {
+        const variantCount = Object.keys(variants).length
+        if (variantCount >= 2) return;
+        
+        const containerId = "id_" + Math.random() + variantCount;
+
+        variantContainer.insertAdjacentHTML("beforeend", `
+                            <div class="col-md-12 d-flex align-items-center my-2" id = "product-variant-${containerId}">
+                                        <button onClick = "handleRemoveAttribute('${containerId}')" type="button" class="btn btn-outline-warning">xóa</button>
+                        <div class="my-2 col-md-4">
+                                                    <input onChange = "handleChangeAttributeName(event, 'product-variants-${containerId}')" type="text" class="form-control " placeholder="Tên biến thế">
+                        </div>
+                                <div id = "product-variants-${containerId}" class="my-2 col-md-7 card p-2" style="display:flex; flex-wrap:wrap">
+                                                <button onClick = "handleAddVariant('${containerId}')" type="button" class="btn btn-primary" style="max-width:max-content">thêm</button>
+                            <input hidden type="text" class="form-control " placeholder="Tên biến thể" style="max-width:200px">
+                        </div>
+                    </div>
+        `)
+
+        variants[`product-variants-${containerId}`] = {
+            name: "",
+            variants: {}
+        }
+        handleAddVariant(containerId)
+    })
+
+
+</script>
+
+
+<script>
+
+    const btnSyncVariant = document.getElementById("btn-sync-variant");
+
+    btnSyncVariant.addEventListener("click", () => {
+        renderVariantTable()
+    })
+
+
+    const getVariants = (data) => {
+        const variantKeys = Object.keys(data);
+        return variantKeys.map(key => {
+            return {
+                name: data[key].name,
+                options: Object.values(data[key].variants)
+            };
+        });
+    }
+
+    const generateCombinations = (variants, index = 0, current = [], result = []) => {
+        if (index === variants.length) {
+            result.push(current.join(" - "));
+            return result;
+        }
+
+        variants[index].options.forEach(option => {
+            generateCombinations(variants, index + 1, [...current, option], result);
+        });
+
+        return result;
+    }
+
+
+    const renderVariantTable = () => {
+
+
+        const container = document.getElementById("variant-table")
+
+
+        if (Object.keys(variants).length <= 0) {
+            container.innerHTML = "";
+            return;
+        }
+
+
+        const variantData = getVariants(variants); 
+        const combinations = generateCombinations(variantData);
+
+        let tableHTML = `
+            <table class="table my-3">
+              <thead>
+                <tr class="ligth">
+                  <th scope="col">Biến thể</th>
+                  <th scope="col">Ảnh</th>
+                  <th scope="col">Skucode</th>
+                  <th scope="col">Barcode</th>
+                  <th scope="col">Giá nhập</th>
+                  <th scope="col">Giá bán</th>
+                </tr>
+              </thead>
+              <tbody>
+      `;
+
+        combinations.forEach(combination => {
+            tableHTML += `
+          <tr>
+            <th scope="row">${combination}</th>
+            <td>
+                    <input  type="file" class="form-control image-file" name="pic" accept="image/*">
+            </td>
+            <td>
+              <input type="text" class="form-control" placeholder="SKU">
+            </td>
+            <td>
+              <input type="text" class="form-control" placeholder="Barcode">
+            </td>
+            <td>
+              <input type="text" class="form-control" placeholder="Giá nhập">
+            </td>
+            <td>
+              <input type="text" class="form-control" placeholder="Giá bán">
+            </td>
+          </tr>
+        `;
+        });
+
+        tableHTML += `
+          </tbody>
+        </table>
+      `;
+
+        container.innerHTML = tableHTML;
+    }
+
+    renderVariantTable()
+
+
+</script>
