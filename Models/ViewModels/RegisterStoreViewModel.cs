@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Lemoo_pos.Models
+namespace Lemoo_pos.Models.ViewModels
 {
     public class RegisterStoreViewModel
     {

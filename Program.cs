@@ -5,8 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using Lemoo_pos.Helper;
+using CloudinaryDotNet;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
+//cloudinary config
+var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
+var cloudName = cloudinarySettings["CloudName"];
+var apiKey = cloudinarySettings["ApiKey"];
+var apiSecret = cloudinarySettings["ApiSecret"];
+
+var account = new Account(cloudName, apiKey, apiSecret);
+var cloudinary = new Cloudinary(account);
 
 
 // database configurations
@@ -14,8 +25,12 @@ var connectionString = builder.Configuration.GetConnectionString("Postgresql");
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
 
+
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddSingleton(cloudinary);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -46,9 +61,14 @@ builder.Services.AddSession(options =>
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IStoreService, StoreService>();
 builder.Services.AddTransient<IAccountService, AccountService>();
+builder.Services.AddTransient<IProductService, ProductService>();
 builder.Services.AddTransient<IAuthorityService, AuthorityService>();
+builder.Services.AddTransient<IMailService, MailService>();
+builder.Services.AddTransient<IOtpService, OtpService>();
 
 builder.Services.AddSingleton<PasswordHelper>();
+
+
 
 var app = builder.Build();
 
