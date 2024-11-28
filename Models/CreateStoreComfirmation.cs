@@ -2,10 +2,8 @@
 
 namespace Lemoo_pos.Models
 {
-    public class CreateStoreComfirmation
+    public class CreateStoreComfirmation : AccountOtpInformation
     {
-        public required string Code { get; set; }
-
         public required string StoreName { get; set; }
 
         public required string StoreOwnerName { get; set; }
@@ -15,5 +13,6 @@ namespace Lemoo_pos.Models
         public required string Phone { get; set; }
 
         public required string Password { get; set; }
+       
     }
 }

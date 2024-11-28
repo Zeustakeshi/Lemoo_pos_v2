@@ -19,33 +19,16 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label>Tên sản phẩm *</label>
-                                    <input type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                                    <input id="ip-product-name" type="text" class="form-control" placeholder="Tên sản phẩm" required>
                                 </div>
                             </div>
 
-
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Mã sản phẩm/ SKU *</label>
-                                    <input type="text" class="form-control" placeholder="Sku code"  required>
-                                    <div class="help-block with-errors"></div>
-                                </div>
-                            </div>
-
-
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label>Barcode </label>
-                                    <input type="text" class="form-control" placeholder="Barcode" >
-                                    <div class="help-block with-errors"></div>
-                                </div>
-                            </div>
 
 
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Khối lượng *</label>
-                                    <input type="number" class="form-control" placeholder="g">
+                                    <input id="ip-product-weight" type="number" class="form-control" placeholder="g">
                                 </div>
                             </div>
 
@@ -53,7 +36,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Đơn vị tính *</label>
-                                    <input type="text" class="form-control" placeholder="đơn vị">
+                                    <input id="ip-product-unit" type="text" class="form-control" placeholder="đơn vị">
                                 </div>
                             </div>
 
@@ -61,25 +44,12 @@
                             <div class="col-md-12">
                                     <div class="form-group">
                                         <label> Mô tả sản phẩm </label>
-                                        <div id="quill-tool">
-                                            <button class="ql-bold" data-toggle="tooltip" data-placement="bottom" title="Bold"></button>
-                                            <button class="ql-underline" data-toggle="tooltip" data-placement="bottom" title="Underline"></button>
-                                            <button class="ql-italic" data-toggle="tooltip" data-placement="bottom" title="Add italic text <cmd+i>"></button>
-                                            <button class="ql-image" data-toggle="tooltip" data-placement="bottom" title="Upload image"></button>
-                                            <button class="ql-code-block" data-toggle="tooltip" data-placement="bottom" title="Show code"></button>
-                                        </div>
-                                        <div id="quill-toolbar">
-                                        </div>
+                                        <div id="product-description-editor"></div>
+                                       
                                     </div>
                              </div> 
                            
                             
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Ảnh bìa sản phẩm</label>
-                                    <input  type="file" class="form-control image-file" name="pic" accept="image/*">
-                                </div>
-                            </div>
 
                             <div class="col-md-12">
                                 <div class="form-group">
@@ -109,7 +79,7 @@
 
 
                         </div>
-                        <button type="submit" class="btn btn-primary mr-2 ">Thêm sản phẩm</button>
+                        <button type="button" id="btn-submit-product" class="btn btn-primary mr-2 ">Thêm sản phẩm</button>
                     </form>
                 </div>
             </div>
@@ -118,8 +88,30 @@
     <!-- Page end  -->
 </div>
 
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+
+<style>
+    .ql-toolbar {
+        background-color: #f8f9fa; /* Thay đổi màu nền */
+        border: 1px solid #dee2e6; /* Đường viền */
+        border-radius: 0.375rem; /* Bo góc */
+    }
+
+    .ql-editor {
+        min-height: 200px; /* Chiều cao tối thiểu */
+        background: #ffffff; /* Màu nền */
+        border: 1px solid #ced4da; /* Đường viền */
+        border-radius: 0.375rem; /* Bo góc */
+        padding: 15px; /* Khoảng cách bên trong */
+        font-size: 1rem; /* Kích thước chữ */
+        color: #212529; /* Màu chữ */
+    }
+</style>
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
     const variants = {};
@@ -156,12 +148,14 @@
     const handleChangeVariant = (e, key, variantId) => {
 
         const value = e.target.value;
-
         variants[key] = {
             ...variants[key],
             variants: {
                 ...variants[key].variants,
-                [variantId]: value
+                [variantId]: {
+                    Name: value, 
+                    Id: crypto.randomUUID()
+                }
             }
         }
     }
@@ -198,7 +192,7 @@
         const variantCount = Object.keys(variants).length
         if (variantCount >= 2) return;
         
-        const containerId = "id_" + Math.random() + variantCount;
+        const containerId = "id_" + crypto.randomUUID();
 
         variantContainer.insertAdjacentHTML("beforeend", `
                             <div class="col-md-12 d-flex align-items-center my-2" id = "product-variant-${containerId}">
@@ -214,6 +208,7 @@
         `)
 
         variants[`product-variants-${containerId}`] = {
+
             name: "",
             variants: {}
         }
@@ -227,6 +222,8 @@
 <script>
 
     const btnSyncVariant = document.getElementById("btn-sync-variant");
+
+    let varivantDetails = [];
 
     btnSyncVariant.addEventListener("click", () => {
         renderVariantTable()
@@ -245,7 +242,12 @@
 
     const generateCombinations = (variants, index = 0, current = [], result = []) => {
         if (index === variants.length) {
-            result.push(current.join(" - "));
+            const name = current.map(value => value.Name).join(" - ")
+            result.push(name);
+            varivantDetails.push({
+                name,
+                attributeValues: current.map(item=> item.Id)
+            })
             return result;
         }
 
@@ -261,7 +263,7 @@
 
 
         const container = document.getElementById("variant-table")
-
+     
 
         if (Object.keys(variants).length <= 0) {
             container.innerHTML = "";
@@ -269,9 +271,10 @@
         }
 
 
-        const variantData = getVariants(variants); 
+        const variantData = getVariants(variants);
+        varivantDetails = []
         const combinations = generateCombinations(variantData);
-
+       
         let tableHTML = `
             <table class="table my-3">
               <thead>
@@ -287,24 +290,27 @@
               <tbody>
       `;
 
+        
         combinations.forEach(combination => {
+       
+          
             tableHTML += `
           <tr>
             <th scope="row">${combination}</th>
             <td>
-                    <input  type="file" class="form-control image-file" name="pic" accept="image/*">
+                  <input id="${combination}-image" type="file" class="form-control image-file" name="produc" accept="image/*">
             </td>
             <td>
-              <input type="text" class="form-control" placeholder="SKU">
+                  <input id="${combination}-skucode" type="text" class="form-control" placeholder="SKU">
             </td>
             <td>
-              <input type="text" class="form-control" placeholder="Barcode">
+                  <input  id="${combination}-barcode" type="text" class="form-control" placeholder="Barcode">
             </td>
             <td>
-              <input type="text" class="form-control" placeholder="Giá nhập">
+                      <input  id="${combination}-costPrice" type="number" class="form-control" placeholder="Giá nhập">
             </td>
             <td>
-              <input type="text" class="form-control" placeholder="Giá bán">
+                      <input id="${combination}-sellingPrice" type="number" class="form-control" placeholder="Giá bán">
             </td>
           </tr>
         `;
@@ -316,9 +322,135 @@
       `;
 
         container.innerHTML = tableHTML;
+       
+
     }
 
     renderVariantTable()
 
+
+
+</script>
+
+
+<script>
+
+    var quill = new Quill('#product-description-editor', {
+        placeholder: 'Nhập mô tả cho sản phẩm của bạn',
+        modules: {
+            syntax: true,
+            toolbar: [
+                // Nhóm các công cụ
+                ['bold', 'italic', 'underline'],        // In đậm, in nghiêng, gạch dưới, gạch ngang
+                ['blockquote', 'code-block'],                    // Trích dẫn, khối mã
+                [{ 'header': 1 }, { 'header': 2 }],              // Tiêu đề h1, h2
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],   // Danh sách thứ tự, không thứ tự
+                [{ 'script': 'sub' }, { 'script': 'super' }],    // Chỉ số dưới, trên
+                [{ 'indent': '-1' }, { 'indent': '+1' }],        // Thụt lề
+                [{ 'direction': 'rtl' }],                       // Viết từ phải sang trái
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],       // Định dạng tiêu đề
+                [{ 'color': [] }, { 'background': [] }],         // Màu chữ, màu nền
+                [{ 'font': [] }],                               // Font chữ
+                [{ 'align': [] }],                              // Căn chỉnh
+                ['link',],                     // Chèn liên kết, hình ảnh, video
+                ['clean']                                       // Nút xóa định dạng
+            ]
+        },
+        theme: 'snow'
+    });
+
+</script>
+
+<script>
+
+    const btnSubmitProduct = document.getElementById("btn-submit-product");
+
+    quill.on('text-change', (delta, oldDelta, source) => {
+        oldDelta.insert;
+    });
+
+
+    btnSubmitProduct.addEventListener("click",async ()=> {
+        const productName = document.getElementById("ip-product-name").value;
+        const productWeight = Number(document.getElementById("ip-product-weight").value);
+        const productUnit = document.getElementById("ip-product-unit").value;
+        const productDescription = quill.root.innerHTML;
+    
+
+        // {
+        //     name: áo thun,
+        //      unit: cái,
+        //     desc: "adsfasdfasdfs"
+        //     variants: [
+        //         {
+        //             name: đỏ - xl
+        //             price: 1000,
+        //             skuCode: ao_thun_do_xl,
+        //             barcode: barcode_ao_thun,
+        //             attributeValues: [1, 4]
+        //         },
+        //         ....
+        //      ],
+        //     attributes: [
+        //         {
+        //             name: màu sắc,
+        //             values: [{ id: 1, name: đỏ }, { id: 2, name: xanh }, { id: 3, name: vàng }]
+        //         },
+        //         {
+        //             name: kích thước,
+        //             values: [{ id: 4, name: xl }, { id: 5, name: lg }]
+        //         }
+        //     ],
+
+        // }
+
+
+        const data = {
+            Name: productName,
+            Unit: productUnit,
+            Weight: productWeight,
+            Description: productDescription,
+            Variants: [],
+            Attributes: Object.keys(variants).map(key => {
+                return {
+                    Name: variants[key].name,
+                    Values: Object.values(variants[key].variants)
+                };
+            })
+        };
+
+       
+
+        varivantDetails.forEach(variant => {
+          
+            const variantDetail = {
+                Name: variant.name,
+                SkuCode: document.getElementById(`${variant.name}-skucode`)?.value,
+                BarCode: document.getElementById(`${variant.name}-barcode`)?.value,
+                CostPrice: Number(document.getElementById(`${variant.name}-costPrice`)?.value ?? "0") ,
+                SellingPrice: Number(document.getElementById(`${variant.name}-sellingPrice`)?.value ?? "0"),
+                AttributeValues: variant.attributeValues
+            }
+
+            data.Variants.push(variantDetail)
+        })
+
+        
+        
+        console.log(data);
+
+        const formData = new FormData();
+
+        formData.append("product", JSON.stringify(data));
+
+        const response = await axios.post("/products/create", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data"
+            }
+        });
+
+
+
+    })
 
 </script>

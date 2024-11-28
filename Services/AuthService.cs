@@ -6,30 +6,48 @@ using Lemoo_pos.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
+using System.Net.Mail;
+using System.Net;
 using System.Text.Json;
 using static System.Formats.Asn1.AsnWriter;
+using Lemoo_pos.Models.ViewModels;
+using Lemoo_pos.Common.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Lemoo_pos.Services
 {
-    public class AuthService(
+    public class AuthService (
         AppDbContext db, 
         PasswordHelper passwordHelper, 
         IConnectionMultiplexer redis,
         IStoreService storeService,
         IAuthorityService authorityService,
-        IAccountService accountService
+        IAccountService accountService,
+        IMailService mailService,
+        IWebHostEnvironment hostEnvironment,
+        IOtpService otpService,
+        IHttpContextAccessor httpContextAccessor
     ) : IAuthService
     {
+        private readonly int MAXIMUM_NUMBER_OF_VALIDATE_OTP_REQUEST = 3;
+
+
         private readonly AppDbContext _db = db;
         private readonly PasswordHelper _passwordHelper = passwordHelper;
         private readonly StackExchange.Redis.IDatabase _redis = redis.GetDatabase();
         private readonly IStoreService _storeService = storeService;
         private readonly IAuthorityService _authorityService = authorityService;
         private readonly IAccountService _accountSerivce = accountService;
+        private readonly IMailService _mailService = mailService;
+        private readonly IWebHostEnvironment _hostEnvironment = hostEnvironment;
+        private readonly IOtpService _otpService = otpService;
+        private readonly string serverBaseUrl = "https://localhost:7278";
+        private readonly HttpContext _httpContext = httpContextAccessor.HttpContext;
 
 
-        public void CreateAccount(RegisterStoreViewModel model)
+        public async Task<string> CreateAccount(RegisterStoreViewModel model)
         {
             bool isExitedAccount = _db.Accounts.Any(account => account.Email == model.Email || account.Phone == model.Phone);
 
@@ -50,9 +68,10 @@ namespace Lemoo_pos.Services
             model.Password = _passwordHelper.HashPassword(model.Password);
 
 
+            // send account creation otp
+            string otpCode = await _otpService.SendOtp(model.Email, OtpType.ACCOUNT_CREATION);
+
             // Save confimation to cache 
-            string confirmationCode = Guid.NewGuid().ToString();
-            string hashConfirmationCode = _passwordHelper.HashPassword(confirmationCode);
 
             CreateStoreComfirmation confirmation = new CreateStoreComfirmation
             {
@@ -61,75 +80,79 @@ namespace Lemoo_pos.Services
                 Phone = model.Phone,
                 StoreName = model.StoreName,
                 StoreOwnerName = model.Name,
-                Code = hashConfirmationCode
+                OtpCode = otpCode
             };
 
             string jsonData = JsonSerializer.Serialize(confirmation);
 
-            Console.WriteLine(jsonData);
+            await _redis.StringSetAsync(confirmation.Code, jsonData, TimeSpan.FromMinutes(30));
 
-            _redis.StringSetAsync("EMAIL_VEIRFY_" + model.Email , jsonData, TimeSpan.FromHours(12));
+            _httpContext.Session.SetString("email", model.Email);
+            _httpContext.Session.SetString("name", model.Name);
+            _httpContext.Session.SetString("code", confirmation.Code);
+            _httpContext.Session.SetString("type", OtpType.ACCOUNT_CREATION.ToString());
 
+            return confirmation.Code;
 
-            // send email verify account
-
-            Console.WriteLine(confirmationCode);
         }
 
-        public Account VerifyEmail (string email, string code)
+        public async Task<string> ResendAccountCreationOtp(string code)
         {
-            string confirmationJsonData = _redis.StringGet("EMAIL_VEIRFY_" + email).ToString();
-            
+            string confirmationJsonData = _redis.StringGet(code).ToString();
 
             if (confirmationJsonData == null)
             {
-                Console.WriteLine("verify email " + email + " failed!. Invalid confirmation email.");
-                return null;
+                throw new Exception("OTP không hợp lệ. Vui lòng thử lại sau.");
             }
 
-            try
+            CreateStoreComfirmation comfirmation = JsonSerializer.Deserialize<CreateStoreComfirmation>(confirmationJsonData);
+
+            if (comfirmation == null)
             {
-                CreateStoreComfirmation confirmation = JsonSerializer.Deserialize<CreateStoreComfirmation>(confirmationJsonData);
-                
-                if (confirmation == null)
-                {
-                    Console.WriteLine("verify email " + email + " failed!. Invalid confirmation code.");
-                    return null;
-                }
-
-                if (!_passwordHelper.VerifyPassword(confirmation.Code, code))
-                {
-                    Console.WriteLine("verify email " + email + " failed!. Invalid confirmation code.");
-                    return null;
-                }
-
-                _redis.StringGetDelete("EMAIL_VEIRFY_" + email);
-
-                // save account to database
-
-                Store newStore =  _storeService.CreateNewStore(confirmation.StoreName);
-
-                Branch defaultBranch = _storeService.CreateDefaultBranch(newStore);
-
-                _authorityService.InitNewStoreAuthority(newStore);
-
-                return _accountSerivce.CreateStoreOwner(
-                    email: confirmation.Email,
-                    phone: confirmation.Phone,
-                    name: confirmation.StoreOwnerName,
-                    password: confirmation.Password,
-                    store: newStore,
-                    branch: defaultBranch
-                );
-
-
+                throw new Exception("OTP không hợp lệ. Vui lòng thử lại sau.");
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                return null;
-            }
+
+            string otpCode = await _otpService.ResendOtp(comfirmation.OtpCode, OtpType.ACCOUNT_CREATION);
+
+            comfirmation.OtpCode = otpCode;
+
+            string comfirmationJsonData = JsonSerializer.Serialize(comfirmation);
+
+            _redis.StringSet(code, comfirmationJsonData, _redis.KeyTimeToLive(code));
+
+            return otpCode;
         }
+
+        public Account VerifyAccountCreationOtp(string code, string plainOtp)
+        {
+            string confirmationJsonData = _redis.StringGet(code).ToString();
+
+            if (confirmationJsonData == null)
+            {
+                throw new Exception("OTP không hợp lệ. Vui lòng thử lại sau.");
+            }
+
+            CreateStoreComfirmation confirmation = VerifyOtpAndRetrieveData<CreateStoreComfirmation>(code, plainOtp);
+
+            // save account to database
+
+            Store newStore = _storeService.CreateNewStore(confirmation.StoreName);
+
+            Branch defaultBranch = _storeService.CreateDefaultBranch(newStore);
+
+            _authorityService.InitNewStoreAuthority(newStore);
+
+            return _accountSerivce.CreateStoreOwner(
+                email: confirmation.Email,
+                phone: confirmation.Phone,
+                name: confirmation.StoreOwnerName,
+                password: confirmation.Password,
+                store: newStore,
+                branch: defaultBranch
+            );
+
+        }
+
 
         public Account Login (LoginViewModel model)
         {
@@ -148,5 +171,54 @@ namespace Lemoo_pos.Services
 
             return account;
         }
+
+
+        private T VerifyOtpAndRetrieveData<T>(string code, string plainOtp) where T : AccountOtpInformation
+        {
+            string otpDataJson = _redis.StringGet(code).ToString();
+
+            T otpData = JsonSerializer.Deserialize<T>(otpDataJson);
+
+            if (otpData == null)
+            {
+                throw new Exception("OTP không hợp lệ");
+            }
+
+            string validationCode = otpData.Code;
+
+            if (otpData.ValidateCount >= MAXIMUM_NUMBER_OF_VALIDATE_OTP_REQUEST)
+            {
+
+                ClearValidationInfo(validationCode, otpData.OtpCode);
+
+                throw new Exception("Bạn đã vượt gới hạn số lần xác thực OTP. Vui lòng yêu cầu OTP mới.");
+            }
+
+            if (!_otpService.VerifyOtp(otpData.OtpCode, plainOtp))
+            {
+                otpData.ValidateCount++;
+                string otpJsonData = JsonSerializer.Serialize(otpData);
+                _redis.StringSet(code, otpJsonData, _redis.KeyTimeToLive(code));
+
+                throw new Exception("OTP không hợp lệ");
+            }
+
+            ClearValidationInfo(validationCode, otpData.OtpCode);
+
+            return otpData;
+        }
+
+
+        private void ClearValidationInfo (string validateionCode, string otpCode)
+        {
+            _redis.StringGetDelete(validateionCode);
+            _otpService.ClearOtp(otpCode);
+            _httpContext.Session.Remove("code");
+            _httpContext.Session.Remove("type");
+            _httpContext.Session.Remove("email");
+            _httpContext.Session.Remove("name");
+        }
+
+       
     }
 }
