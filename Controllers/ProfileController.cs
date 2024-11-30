@@ -2,7 +2,7 @@
 
 namespace Lemoo_pos.Controllers
 {
-    public class ProfileController : Controller
+    public class ProfileController : AuthenticationBaseController
     {
 
         [HttpGet]

@@ -8,8 +8,7 @@ namespace Lemoo_pos.Controllers
 {
 
     [Route("products")]
-
-    public class ProductController : Controller
+    public class ProductController : AuthenticationBaseController
     {
         private readonly IProductService _productService;
 
@@ -21,7 +20,7 @@ namespace Lemoo_pos.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            return View();
+            return View(_productService.GetAllProduct());
         }
 
         [HttpGet("create")]
@@ -32,14 +31,36 @@ namespace Lemoo_pos.Controllers
 
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateProduct( [FromForm] string product)
+        public  async Task<IActionResult>  CreateProduct( [FromForm] string product, [FromForm] IFormFile image)
         {
             var productData = System.Text.Json.JsonSerializer.Deserialize<CreateProductViewModel>(product);
 
             if (productData == null) { return BadRequest("Product is null"); }
 
-
-            return Ok(new { message = "Product created successfully", product = _productService.CreateProduct(productData) });
+            try {
+                await _productService.CreateProduct(productData, image);
+                return Ok("Product created successfully");
+            }   
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
+
+
+        [HttpGet("{productId}/variants")]
+        public IActionResult ProductVariants (long productId)
+        {
+            return View(_productService.GetAllVariants(productId));
+        }
+
+        [HttpGet("{productId}/variants/{variantId}")]
+        public IActionResult ProductVariantDetail(long productId, long variantId)
+        {
+            return View(_productService.GetProductVariantByIdAndProductID(variantId, productId));
+        }
+
+
+
     }
 }

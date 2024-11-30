@@ -1,0 +1,12 @@
+﻿@model List<Lemoo_pos.Models.Entities.ProductCategory>
+
+<div class="form-group">
+    <label>Danh mục sản phẩm</label>
+    <select id="categories" class="form-control mb-3">
+        <option value="null">-- Chưa có danh mục --</option>
+        @foreach (var category in Model)
+        {
+            <option value="@category.Id">@category.Name</option>
+        }
+    </select>
+</div>

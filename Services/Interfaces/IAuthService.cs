@@ -13,5 +13,7 @@ namespace Lemoo_pos.Services.Interfaces
         Account VerifyAccountCreationOtp(string code, string plainOtp);
 
         Account Login(LoginViewModel model);
+
+        void Logout();
     }
 }

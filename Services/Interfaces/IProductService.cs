@@ -1,9 +1,16 @@
-﻿using Lemoo_pos.Models.ViewModels;
+﻿using Lemoo_pos.Models.Entities;
+using Lemoo_pos.Models.ViewModels;
 
 namespace Lemoo_pos.Services.Interfaces
 {
     public interface IProductService
     {
-        CreateProductViewModel CreateProduct(CreateProductViewModel model);
+        Task CreateProduct(CreateProductViewModel model, IFormFile image);
+
+        List<ProductResponseViewModel> GetAllProduct();
+
+        List<ProductVariantResponseViewModel> GetAllVariants(long productId);
+
+        ProductVariantDetailResponseViewModel GetProductVariantByIdAndProductID(long variantId, long productId);
     }
 }

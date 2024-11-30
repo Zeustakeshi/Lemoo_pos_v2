@@ -16,6 +16,7 @@ var cloudName = cloudinarySettings["CloudName"];
 var apiKey = cloudinarySettings["ApiKey"];
 var apiSecret = cloudinarySettings["ApiSecret"];
 
+
 var account = new Account(cloudName, apiKey, apiSecret);
 var cloudinary = new Cloudinary(account);
 
@@ -65,6 +66,8 @@ builder.Services.AddTransient<IProductService, ProductService>();
 builder.Services.AddTransient<IAuthorityService, AuthorityService>();
 builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddTransient<IOtpService, OtpService>();
+builder.Services.AddTransient<IProductCategoryService, ProductCategoryService>();
+builder.Services.AddTransient<ICloudinaryService, CloudinaryService>();
 
 builder.Services.AddSingleton<PasswordHelper>();
 
@@ -82,12 +85,15 @@ if (!app.Environment.IsDevelopment())
 	app.UseHsts();
 }
 
+
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
 
 app.UseSession();
+
 
 app.UseAuthorization();
 

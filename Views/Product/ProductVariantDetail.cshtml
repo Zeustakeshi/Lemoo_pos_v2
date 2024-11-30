@@ -1,0 +1,219 @@
+﻿@model Lemoo_pos.Models.ViewModels.ProductVariantDetailResponseViewModel
+@{
+    Layout = "_LayoutHome";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-4">
+            <div class="card mb-2">
+                <div class="row no-gutters p-3">
+                    <div class="col-md-6" style="width:250px; height: 100%">
+                        <img src="@Model.Product.Image" class="card-img" alt="#" style="width: 100%; height: 100%; object-fit:cover;">
+                    </div>
+                    <div class="col-md-6 ">
+                        <div class="card-body">
+                            <h4 class="card-title">@Model.Product.Name</h4>
+                            <h5 class="card-text"><small class="text-muted"> Số lượng biến thể:  
+                                    @{
+                                        if (Model.Variants != null && Model.Variants.Count >= 0)
+                                        {
+                                            <b>@(Model.Variants.Count + 1)</b>
+                                        }
+                                        else
+                                        {
+                                            <b>0</b>
+                                        }
+                                    }
+                             </small></h5>
+                            <a href="/products/@Model.Product.Id">Xem sản phẩm</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            @if (Model.Variants != null && Model.Variants.Count > 0)
+            {
+                    <div class="card mb-2 ">
+                    <h4 class="card-title p-2">Danh sách biến thể</h4>
+                        <div class="card-body ">
+                            @foreach (var variant in Model.Variants)
+                            {
+                                <a style="color:currentColor;" href="/products/@Model.Product.Id/variants/@variant.Id" class="card mb-2">
+                                    <div class="row no-gutters">
+                                        <div class="col-md-4" style="width:250px; height: 100%">
+                                        <img src="@(!string.IsNullOrEmpty(variant.Image) ? variant.Image : "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg")" class="card-img" alt="#" style="width: 100%; height: 100%; object-fit:cover;">
+                                        </div>
+                                        <div class="col-md-8 ">
+                                            <div class="card-body">
+                                                <h4 class="card-title">@variant.Name</h4>
+                                                <div class = "d-flex justify-content-start align-items-center" style = "gap: 20px;">
+                                                    <h6>Tồn kho: 0</h6>
+                                                    <h6>Có thể bán: 10</h6>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </a>
+                            } 
+                        </div>
+                </div>
+            }
+            
+        </div>
+        
+
+
+        <div class ="col-8" >
+
+            <form data-toggle="validator" >
+                <div class="card w-100" >
+                    <div class="card-body" >
+                    <h4 class="card-title" >Thông tin biến thể</h4>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Tên biến thể *</label>
+                                <input id="ip-product-name" type="text" class="form-control" placeholder="Tên sản phẩm" value="@Model.Name" disabled>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label>Ảnh Biến thể</label>
+                                <input type="file" hidden class="hide" id="ip-variant-image" >
+                                <div class="mt-3" style="width: 220px; height: 180px; padding: 5px; border-radius:20px; border-style: dashed; border-width: 1px;" >
+                                    <img id="preview-image"
+                                         src="@(!string.IsNullOrEmpty(Model.Image) ? Model.Image : "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg")"
+                                         alt="Nhấn để chọn ảnh"
+                                         style="cursor: pointer; width: 100%; height: 100%; object-fit:cover; border-radius:inherit;">
+                                </div>
+                            </div>
+                        </div>
+
+                       <div class ="d-flex gap-2">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Mã Sku *</label>
+                                    <input id="ip-variant-sku" type="text" class="form-control" placeholder="Tên sản phẩm" required value = "@Model.SkuCode">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Mã vạch/ Barcode *</label>
+                                    <input value ="@Model.BarCode" id="ip-product-name" type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                                </div>
+                            </div>
+                       </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Đơn vị tính *</label>
+                                <input value ="@Model.Product.Unit" id="ip-product-name" type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                            </div>
+                        </div>
+
+
+                </div>
+                </div>
+
+                <div class="card w-100">
+                    <div class="card-body">
+                        <h4 class="card-title"> Thông tin Giá bán</h4>
+
+                        <div class="d-flex gap-2">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Giá nhập kho *</label>
+                                    <input value="@Model.CostPrice" id="ip-variant-sku" type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Giá bán *</label>
+                                    <input value="@Model.SellingPrice" id="ip-product-name" type="text" class="form-control" placeholder="Tên sản phẩm" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="card w-100">
+                    <div class="card-body">
+                        <div class = "d-flex justify-content-between align-items-center">
+                            <h4 class="card-title">Thông tin kho</h4>
+                            <a href ="" class="">Lịch sử thay đổi</a>
+                        </div>
+
+                        <table class="table my-3">
+                            <thead>
+                                <tr class="ligth">
+                                    <th scope="col">Kho lưu trữ</th>
+                                    <th scope="col">Tồn kho</th>
+                                    <th scope="col">Có thể bán</th>
+                                    <th scope="col">Lý do điều chỉnh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th scope="row">Chi nhánh 1</th>
+                                    <td>
+                                        <input id="${combination}-skucode" type="number" class="form-control" placeholder="Tồn kho">
+                                    </td>
+                                    <td>
+                                        <input id="${combination}-sellingPrice" type="number" class="form-control" placeholder="Có thể bán">
+                                    </td>
+                                    <td>
+                                        <select id="categories" class="form-control">
+                                            <option value="1">Thưc tế</option>
+                                            <option value="1">Hư hỏng</option>
+                                            <option value="1">Trả hàng</option>
+                                            <option value="1">Chuyển hàng</option>
+                                            <option value="1">Sản xuất thêm</option>
+                                            <option value="1">Thất lạc</option>
+                                            <option value="1">Khác</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                               
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class= "d-flex justify-content-end align-items-center mb-5" style = "gap:20px;">
+                    <button type="button" id="btn-submit-product" class="btn btn-primary mr-2 ">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const inputFile = document.getElementById('ip-variant-image');
+    const previewImage = document.getElementById('preview-image');
+
+    // Khi người dùng nhấn vào ảnh xem trước, kích hoạt click trên input file
+    previewImage.addEventListener('click', () => {
+        inputFile.click();
+    });
+
+    // Khi người dùng chọn tệp, hiển thị ảnh xem trước
+    inputFile.addEventListener('change', (event) => {
+        const file = event.target.files[0]; // Lấy tệp đầu tiên
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                // Gán src của thẻ img với ảnh đã chọn
+                previewImage.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file); // Đọc tệp dưới dạng Data URL
+        }
+    });
+
+</script>

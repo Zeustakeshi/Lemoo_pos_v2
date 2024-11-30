@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Lemoo_pos.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20241123161944_add_product")]
-    partial class add_product
+    [Migration("20241130132007_add-product-variant-quantity-and-image")]
+    partial class addproductvariantquantityandimage
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -55,10 +55,15 @@ namespace Lemoo_pos.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<long>("StoreId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
 
                     b.ToTable("Accounts");
                 });
@@ -214,15 +219,24 @@ namespace Lemoo_pos.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<long?>("CategoryId")
+                        .HasColumnType("bigint");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
+                    b.Property<string>("Image")
+                        .HasColumnType("text");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<long>("StoreId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Unit")
                         .HasColumnType("text");
@@ -231,6 +245,10 @@ namespace Lemoo_pos.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("StoreId");
 
                     b.ToTable("Products");
                 });
@@ -286,6 +304,37 @@ namespace Lemoo_pos.Migrations
                     b.ToTable("ProductAttributeValues");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("StoreId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("ProductCategories");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductVariant", b =>
                 {
                     b.Property<long>("Id")
@@ -294,9 +343,15 @@ namespace Lemoo_pos.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<bool>("AllowSale")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("BarCode")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<double>("CostPrice")
+                        .HasColumnType("double precision");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -304,11 +359,14 @@ namespace Lemoo_pos.Migrations
                     b.Property<string>("Image")
                         .HasColumnType("text");
 
-                    b.Property<double>("Price")
-                        .HasColumnType("double precision");
-
                     b.Property<long>("ProductId")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<double>("SellingPrice")
+                        .HasColumnType("double precision");
 
                     b.Property<string>("SkuCode")
                         .IsRequired()
@@ -411,6 +469,17 @@ namespace Lemoo_pos.Migrations
                     b.ToTable("Stores");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Account", b =>
+                {
+                    b.HasOne("Lemoo_pos.Models.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.AccountAuthority", b =>
                 {
                     b.HasOne("Lemoo_pos.Models.Entities.Account", "Account")
@@ -471,6 +540,23 @@ namespace Lemoo_pos.Migrations
                     b.Navigation("Store");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Product", b =>
+                {
+                    b.HasOne("Lemoo_pos.Models.Entities.ProductCategory", "Category")
+                        .WithMany("Products")
+                        .HasForeignKey("CategoryId");
+
+                    b.HasOne("Lemoo_pos.Models.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductAttributeValue", b =>
                 {
                     b.HasOne("Lemoo_pos.Models.Entities.ProductAttribute", "Attribute")
@@ -482,10 +568,21 @@ namespace Lemoo_pos.Migrations
                     b.Navigation("Attribute");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductCategory", b =>
+                {
+                    b.HasOne("Lemoo_pos.Models.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductVariant", b =>
                 {
                     b.HasOne("Lemoo_pos.Models.Entities.Product", "Product")
-                        .WithMany()
+                        .WithMany("Variants")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -502,7 +599,7 @@ namespace Lemoo_pos.Migrations
                         .IsRequired();
 
                     b.HasOne("Lemoo_pos.Models.Entities.ProductVariant", "Variant")
-                        .WithMany()
+                        .WithMany("AttributeValues")
                         .HasForeignKey("VariantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -534,6 +631,21 @@ namespace Lemoo_pos.Migrations
             modelBuilder.Entity("Lemoo_pos.Models.Entities.Authority", b =>
                 {
                     b.Navigation("Permissions");
+                });
+
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Product", b =>
+                {
+                    b.Navigation("Variants");
+                });
+
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductCategory", b =>
+                {
+                    b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductVariant", b =>
+                {
+                    b.Navigation("AttributeValues");
                 });
 #pragma warning restore 612, 618
         }

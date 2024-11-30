@@ -4,8 +4,8 @@ using System.Diagnostics;
 
 namespace Lemoo_pos.Controllers
 {
-	public class HomeController : Controller
-	{
+	public class HomeController : AuthenticationBaseController
+    {
 
 		[HttpGet]
 		public IActionResult Index()

@@ -49,7 +49,14 @@ namespace Lemoo_pos.Services
                 message.IsBodyHtml = true;
 
                 // Gửi email
-                await smtp.SendMailAsync(message);
+                try
+                {
+                    await smtp.SendMailAsync(message);
+                }catch(Exception ex)
+                {
+                    await Console.Out.WriteLineAsync(ex.Message);
+                    throw;
+                }
             }
         }
 

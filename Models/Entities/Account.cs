@@ -15,5 +15,7 @@ namespace Lemoo_pos.Models.Entities
         public string? Avatar { get; set; }
 
         public required List<AccountAuthority> Authorities;
+
+        public required Store Store { get; set; }
     }
 }

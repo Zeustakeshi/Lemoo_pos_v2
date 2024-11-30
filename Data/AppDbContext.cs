@@ -20,7 +20,7 @@ namespace Lemoo_pos.Data
         public DbSet<ProductVariant> ProductVariants { get; set; }
         public DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
         public DbSet<ProductAttribute> ProductAttributes { get; set; }
-
+        public DbSet<ProductCategory> ProductCategories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,7 +46,15 @@ namespace Lemoo_pos.Data
             return base.SaveChanges();
         }
 
-       
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            //optionsBuilder
+            //    .LogTo(Console.WriteLine, LogLevel.Error)
+            //    .EnableSensitiveDataLogging()
+            //    .EnableDetailedErrors()
+            //    ;
+        }
+
 
         private void AddTimestamps()
         {
@@ -63,7 +71,7 @@ namespace Lemoo_pos.Data
 
                     e.CreatedAt = now;
                 }
-                ((BaseEntity)entity.Entity).UpdatedAt = now;
+               ((BaseEntity)entity.Entity).UpdatedAt = now;
             }
         }
     }

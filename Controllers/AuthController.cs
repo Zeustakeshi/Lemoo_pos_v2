@@ -39,11 +39,6 @@ namespace Lemoo_pos.Controllers
             try
             {
 				Account account = _authService.Login(model);
-
-                HttpContext.Session.SetString("UserName", account.Name);
-                HttpContext.Session.SetString("Email", account.Email);
-                HttpContext.Session.SetString("Avatar", account.Avatar ?? "");
-
 				return Redirect("/");
             }
             catch (Exception ex)
@@ -59,7 +54,7 @@ namespace Lemoo_pos.Controllers
         [HttpGet("logout")]
         public IActionResult Logout ()
 		{
-            HttpContext.Session.Clear();
+            _authService.Logout();
             return RedirectToAction("Login");
 		}
 
@@ -125,9 +120,7 @@ namespace Lemoo_pos.Controllers
                 if (type.Equals(OtpType.ACCOUNT_CREATION))
                 {
                     Account account = _authService.VerifyAccountCreationOtp(code, plainOtp);
-                    HttpContext.Session.SetString("UserName", account.Name);
-                    HttpContext.Session.SetString("Email", account.Email);
-                    HttpContext.Session.SetString("Avatar", account.Avatar ?? "");
+                    
                 }
 
                 HttpContext.Session.Remove("code");

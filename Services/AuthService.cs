@@ -3,18 +3,11 @@ using Lemoo_pos.Helper;
 using Lemoo_pos.Models;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
-using System.Net.Mail;
-using System.Net;
 using System.Text.Json;
-using static System.Formats.Asn1.AsnWriter;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Common.Enums;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lemoo_pos.Services
 {
@@ -142,7 +135,7 @@ namespace Lemoo_pos.Services
 
             _authorityService.InitNewStoreAuthority(newStore);
 
-            return _accountSerivce.CreateStoreOwner(
+            Account newAccount =  _accountSerivce.CreateStoreOwner(
                 email: confirmation.Email,
                 phone: confirmation.Phone,
                 name: confirmation.StoreOwnerName,
@@ -151,13 +144,19 @@ namespace Lemoo_pos.Services
                 branch: defaultBranch
             );
 
+            SaveAuthSession(newAccount, newStore);
+
+            return newAccount;
+
         }
 
 
         public Account Login (LoginViewModel model)
         {
 
-            Account account = _db.Accounts.SingleOrDefault(a => a.Email == model.Email);
+            Account account = _db.Accounts
+                .Include(a => a.Store)
+                .SingleOrDefault(a => a.Email == model.Email);
 
             if (account == null)
             {
@@ -169,7 +168,14 @@ namespace Lemoo_pos.Services
                 throw new Exception("Email hoặc mật khẩu không hợp lệ.");
             }
 
+            SaveAuthSession(account, account.Store);
+
             return account;
+        }
+
+        public void Logout ()
+        {
+            _httpContext.Session.Clear();
         }
 
 
@@ -209,6 +215,7 @@ namespace Lemoo_pos.Services
         }
 
 
+
         private void ClearValidationInfo (string validateionCode, string otpCode)
         {
             _redis.StringGetDelete(validateionCode);
@@ -219,6 +226,16 @@ namespace Lemoo_pos.Services
             _httpContext.Session.Remove("name");
         }
 
-       
+        private void SaveAuthSession (Account account, Store store)
+        {
+            _httpContext.Session.SetString("AccountId", account.Id.ToString());
+            _httpContext.Session.SetString("UserName", account.Name);
+            _httpContext.Session.SetString("Email", account.Email);
+            _httpContext.Session.SetString("Avatar", account.Avatar ?? "");
+            _httpContext.Session.SetString("StoreName", store.Name);
+            _httpContext.Session.SetString("StoreId", store.Id.ToString());
+        }
+
+      
     }
 }

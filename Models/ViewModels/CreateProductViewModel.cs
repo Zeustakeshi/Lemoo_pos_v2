@@ -18,6 +18,9 @@ namespace Lemoo_pos.Models.ViewModels
         [StringLength(5000, ErrorMessage = "Mô tả sản phẩm quá dài")]
         public string? Description { get; set; }
 
+        public long? CategoryId { get; set; }
+
+
         public List<ProductVariantViewModel> Variants { get; set; }
         public List<ProductAttributeViewModel> Attributes { get; set; }
 
@@ -26,10 +29,15 @@ namespace Lemoo_pos.Models.ViewModels
     public class ProductVariantViewModel
     {
         public string Name { get; set; }
-        public decimal CostPrice { get; set; }
-        public decimal SellingPrice { get; set; }
+
+        public decimal CostPrice { get; set; } = 0;
+        public decimal SellingPrice { get; set; } = 0;
         public string SkuCode { get; set; }
         public string BarCode { get; set; }
+
+        public long Quantity { get; set; } = 0;
+
+        public bool AllowSale { get; set; } = false;
 
         public List<string> AttributeValues { get; set; }
     }

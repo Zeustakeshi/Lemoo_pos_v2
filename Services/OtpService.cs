@@ -95,7 +95,15 @@ namespace Lemoo_pos.Services
 
             _redis.StringSetAsync(otp.Code, otpJson, OTP_EXPIRED_TIME);
 
-            handleSendOtp(email, plainOtp);
+            try
+            {
+                handleSendOtp(email, plainOtp);
+            }catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync(ex.Message);
+                throw;
+            }
+
 
             return otp.Code;
         }

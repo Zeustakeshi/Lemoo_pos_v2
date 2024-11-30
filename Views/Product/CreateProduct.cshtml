@@ -40,6 +40,20 @@
                                 </div>
                             </div>
 
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Ảnh sản phẩm</label>
+                                    <input type="file" hidden class="hide" id="ip-product-image">
+                                    <div class="mt-3" style="width: 220px; height: 180px; padding: 5px; border-radius:20px; border-style: dashed; border-width: 1px;">
+                                        <img id="preview-image"
+                                             src = "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg"
+                                             alt="Nhấn để chọn ảnh"
+                                             style="cursor: pointer; width: 100%; height: 100%; object-fit:cover; border-radius:inherit;">
+                                    </div>
+                                </div>
+                                
+                            </div>
+
 
                             <div class="col-md-12">
                                     <div class="form-group">
@@ -47,15 +61,33 @@
                                         <div id="product-description-editor"></div>
                                        
                                     </div>
-                             </div> 
-                           
+                             </div>
+
+                            <div class="col-md-12">
+                                @await Component.InvokeAsync("ProductCategorySelect")
+                            </div>
                             
 
                             <div class="col-md-12">
+
                                 <div class="form-group">
                                     <label>Biến thể sản phẩm</label>
-                                    <div >
-                                        <button id="btn-add-variant" type="button" class="btn btn-outline-primary mt-2">Thêm biến thể</button>
+                                     <div class ="d-flex" style = "gap:20px;">
+                                        <div class="custom-control custom-checkbox">
+                                                <input checked name="product-variant-options" type="radio" class="custom-control-input " id="product-variant-options--no-variant">
+                                                <label class="custom-control-label " for="product-variant-options--no-variant">Sản phẩm có một biến thể</label>
+                                            </div>
+
+                                            <div class="custom-control custom-checkbox">
+                                                <input name="product-variant-options" type="radio" class="custom-control-input" id="product-variant-options--many-variant">
+                                                <label class="custom-control-label " for="product-variant-options--many-variant">Sản phẩm có nhiều biến thể</label>
+                                            </div>
+                                    </div>
+                                    <div id = "product-no-variant-container">
+                                        
+                                    </div>
+                                    <div id = "product-many-variant-container" style="display:none;">
+                                        <button id="btn-add-variant" type="button" class="btn btn-outline-primary mt-2">Thêm thuộc tính</button>
 
                                         <div id="variant-container">
                                             
@@ -69,9 +101,8 @@
                                             </button>
                                         </div>
                                         <div id="variant-table">
-
+                                           
                                         </div>
-                                      
 
                                     </div>
                                 </div>
@@ -79,7 +110,9 @@
 
 
                         </div>
-                        <button type="button" id="btn-submit-product" class="btn btn-primary mr-2 ">Thêm sản phẩm</button>
+                        <div class = "d-flex justify-content-end">
+                            <button type="button" id="btn-submit-product" class="btn btn-primary mr-2 ">Thêm sản phẩm</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -89,6 +122,8 @@
 </div>
 
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
+
+
 
 <style>
     .ql-toolbar {
@@ -106,19 +141,205 @@
         font-size: 1rem; /* Kích thước chữ */
         color: #212529; /* Màu chữ */
     }
+
+
+  
+</style>
+
+<style>
+    .toggler-wrapper {
+        display: block;
+        width: 45px;
+        height: 25px;
+        cursor: pointer;
+        position: relative;
+    }
+
+        .toggler-wrapper input[type="checkbox"] {
+            display: none;
+        }
+
+            .toggler-wrapper input[type="checkbox"]:checked + .toggler-slider {
+                background-color: #44cc66;
+            }
+
+        .toggler-wrapper .toggler-slider {
+            background-color: #ccc;
+            position: absolute;
+            border-radius: 100px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-transition: all 300ms ease;
+            transition: all 300ms ease;
+        }
+
+        .toggler-wrapper .toggler-knob {
+            position: absolute;
+            -webkit-transition: all 300ms ease;
+            transition: all 300ms ease;
+        }
+
+
+        .toggler-wrapper.style-1 input[type="checkbox"]:checked + .toggler-slider .toggler-knob {
+            left: calc(100% - 19px - 3px);
+        }
+
+        .toggler-wrapper.style-1 .toggler-knob {
+            width: calc(25px - 6px);
+            height: calc(25px - 6px);
+            border-radius: 50%;
+            left: 3px;
+            top: 3px;
+            background-color: #fff;
+        }
+
 </style>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 
 <script>
-    const variants = {};
+
+      let variants = {};
+      let varivantDetails = [];
+</script>
+
+<script>
+
+    const productManyVariantCheckbox = document.getElementById("product-variant-options--many-variant");
+    const productNoVariantCheckbox = document.getElementById("product-variant-options--no-variant");
+
+    const productManyVariantContainer = document.getElementById("product-many-variant-container");
+    const productNoVariantContainer = document.getElementById("product-no-variant-container");
+
+    productManyVariantCheckbox.addEventListener("change", (e) => {
+        if (!e.target.checked) return;
+        productNoVariantContainer.style = "display:none";
+        productManyVariantContainer.style = "display:block";
+        variants = {};
+        varivantDetails = []
+    })
+
+    productNoVariantCheckbox.addEventListener("change", (e) => {
+        if (!e.target.checked) return;
+        productManyVariantContainer.style = "display:none";
+        productNoVariantContainer.style = "display:block";
+
+        variants = {};
+        varivantDetails = []
+        initDefaultVariant();
+        
+    })
+
+
+    const initDefaultVariant = () => {
+        
+        const html = `
+            <table class="table my-3">
+                <thead>
+                    <tr class="ligth">
+                        <th scope="col">Biến thể</th>
+                        <th scope="col">Skucode</th>
+                        <th scope="col">Barcode</th>
+                        <th scope="col">Kho hàng</th>
+                        <th scope="col">Giá nhập</th>
+                        <th scope="col">Giá bán</th>
+                        <th scope="col">Cho phép bán</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th scope="row">mặc định</th>
+                            <td>
+                                <input id="default-skucode" type="text" class="form-control" placeholder="SKU" >
+                            </td>
+                            <td>
+                                <input  id="default-barcode" type="text" class="form-control" placeholder="Barcode">
+                            </td>
+                            <td>
+                                <input  id="default-quantity" type="number" class="form-control" placeholder="Kho hàng" value = "0" min="0">
+                            </td>
+                            <td>
+                                <input  id="default-costPrice" type="number" class="form-control" placeholder="Giá nhập" value = "0" min="0">
+                            </td>
+                            <td>
+                                <input id="default-sellingPrice" type="number" class="form-control" placeholder="Giá bán" value = "0" min="0">
+                            </td>
+                             <td class = "">
+                                    <label class="toggler-wrapper style-1">
+                                          <input type="checkbox" id="default-allowSale" >
+                                      <div class="toggler-slider">
+                                        <div class="toggler-knob"></div>
+                                      </div>
+                                    </label>
+                            </td>
+                        </tr>
+                    </tbody>
+            </table>
+        `
+
+        productNoVariantContainer.innerHTML = html;
+
+        varivantDetails.push({
+            name: "default",
+            attributeValues: ["default-variant"]
+        })
+
+        variants = {
+            "product-variants-default": {
+                name: "default",
+                variants: {
+                    "default": {
+                        Id: "default-variant",
+                        Name: "mặc định"
+                    }
+                }
+            }
+        }
+
+       
+    }
+
+    initDefaultVariant();
+
+</script>
+
+<script>
+    const inputFile = document.getElementById('ip-product-image');
+    const previewImage = document.getElementById('preview-image');
+
+    // Khi người dùng nhấn vào ảnh xem trước, kích hoạt click trên input file
+    previewImage.addEventListener('click', () => {
+        inputFile.click();
+    });
+
+    // Khi người dùng chọn tệp, hiển thị ảnh xem trước
+    inputFile.addEventListener('change', (event) => {
+        const file = event.target.files[0]; // Lấy tệp đầu tiên
+        if (file) {
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                // Gán src của thẻ img với ảnh đã chọn
+                previewImage.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file); // Đọc tệp dưới dạng Data URL
+        }
+    });
+
+</script>
+
+
+<script>
+  
     const buttonAddVariant = document.getElementById("btn-add-variant")
     const variantContainer = document.getElementById("variant-container")
    
-
     
 
     const handleRemoveAttribute = (index) => {
@@ -198,7 +419,7 @@
                             <div class="col-md-12 d-flex align-items-center my-2" id = "product-variant-${containerId}">
                                         <button onClick = "handleRemoveAttribute('${containerId}')" type="button" class="btn btn-outline-warning">xóa</button>
                         <div class="my-2 col-md-4">
-                                                    <input onChange = "handleChangeAttributeName(event, 'product-variants-${containerId}')" type="text" class="form-control " placeholder="Tên biến thế">
+                                                    <input onChange = "handleChangeAttributeName(event, 'product-variants-${containerId}')" type="text" class="form-control " placeholder="Tên thuộc tính">
                         </div>
                                 <div id = "product-variants-${containerId}" class="my-2 col-md-7 card p-2" style="display:flex; flex-wrap:wrap">
                                                 <button onClick = "handleAddVariant('${containerId}')" type="button" class="btn btn-primary" style="max-width:max-content">thêm</button>
@@ -223,12 +444,10 @@
 
     const btnSyncVariant = document.getElementById("btn-sync-variant");
 
-    let varivantDetails = [];
 
     btnSyncVariant.addEventListener("click", () => {
         renderVariantTable()
     })
-
 
     const getVariants = (data) => {
         const variantKeys = Object.keys(data);
@@ -241,6 +460,7 @@
     }
 
     const generateCombinations = (variants, index = 0, current = [], result = []) => {
+     
         if (index === variants.length) {
             const name = current.map(value => value.Name).join(" - ")
             result.push(name);
@@ -280,11 +500,12 @@
               <thead>
                 <tr class="ligth">
                   <th scope="col">Biến thể</th>
-                  <th scope="col">Ảnh</th>
                   <th scope="col">Skucode</th>
                   <th scope="col">Barcode</th>
+                  <th scope="col">Kho hàng</th>
                   <th scope="col">Giá nhập</th>
                   <th scope="col">Giá bán</th>
+                  <th scope="col">Cho phép bán</th>
                 </tr>
               </thead>
               <tbody>
@@ -297,20 +518,29 @@
             tableHTML += `
           <tr>
             <th scope="row">${combination}</th>
-            <td>
-                  <input id="${combination}-image" type="file" class="form-control image-file" name="produc" accept="image/*">
-            </td>
+            
             <td>
                   <input id="${combination}-skucode" type="text" class="form-control" placeholder="SKU">
             </td>
             <td>
                   <input  id="${combination}-barcode" type="text" class="form-control" placeholder="Barcode">
             </td>
-            <td>
-                      <input  id="${combination}-costPrice" type="number" class="form-control" placeholder="Giá nhập">
+             <td>
+                  <input  id="${combination}-quantity" type="number" class="form-control" placeholder="Kho hàng" value = "0" min="0">
             </td>
             <td>
-                      <input id="${combination}-sellingPrice" type="number" class="form-control" placeholder="Giá bán">
+                      <input  id="${combination}-costPrice" type="number" class="form-control" placeholder="Giá nhập" value = "0" min="0">
+            </td>
+            <td>
+                      <input id="${combination}-sellingPrice" type="number" class="form-control" placeholder="Giá bán" value = "0" min="0">
+            </td>
+            <td>
+                       <label class="toggler-wrapper style-1">
+                                <input type="checkbox" id="${combination}-allowSale" >
+                        <div class="toggler-slider">
+                        <div class="toggler-knob"></div>
+                        </div>
+                           </label>
             </td>
           </tr>
         `;
@@ -326,7 +556,7 @@
 
     }
 
-    renderVariantTable()
+  
 
 
 
@@ -376,6 +606,7 @@
         const productUnit = document.getElementById("ip-product-unit").value;
         const productDescription = quill.root.innerHTML;
     
+      
 
         // {
         //     name: áo thun,
@@ -416,7 +647,8 @@
                     Name: variants[key].name,
                     Values: Object.values(variants[key].variants)
                 };
-            })
+            }),
+            CategoryId: Number(document.getElementById("categories").value)
         };
 
        
@@ -429,28 +661,48 @@
                 BarCode: document.getElementById(`${variant.name}-barcode`)?.value,
                 CostPrice: Number(document.getElementById(`${variant.name}-costPrice`)?.value ?? "0") ,
                 SellingPrice: Number(document.getElementById(`${variant.name}-sellingPrice`)?.value ?? "0"),
-                AttributeValues: variant.attributeValues
+                Quantity: Number(document.getElementById(`${variant.name}-quantity`)?.value ?? "0"),
+                AttributeValues: variant.attributeValues,
+                AllowSale: Boolean(document.getElementById(`${variant.name}-costPrice`)?.value ?? "false")
             }
 
             data.Variants.push(variantDetail)
         })
 
-        
-        
-        console.log(data);
 
         const formData = new FormData();
 
+
         formData.append("product", JSON.stringify(data));
 
-        const response = await axios.post("/products/create", formData, {
-            headers: {
-                "Content-Type": "multipart/form-data"
-            }
-        });
+        const productImage = document.getElementById('ip-product-image');
+        formData.append('image', productImage.files[0]);
+       
 
+         try {
+            btnSubmitProduct.classList.add("create-product-loading");
+            btnSubmitProduct.textContent = "Đang tạo sản phẩm"
+            btnSubmitProduct.disabled = true;
 
+             console.log({data})
 
+            const response = await axios.post("/products/create", formData, {
+                headers: {
+                    "content-type": "multipart/form-data"
+                }
+            });
+
+            const baseurl = window.location.origin;
+            window.location.href = baseurl  + "/products"
+
+         }catch (error) {
+             console.log(error);
+             alert("Tạo sản phẩm thất bại");
+         }
+
+        btnSubmitProduct.classList.remove("create-product-loading");
+        btnSubmitProduct.textContent = "Thêm sản phẩm"
+        btnSubmitProduct.disabled = false;
     })
 
 </script>

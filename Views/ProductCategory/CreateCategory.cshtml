@@ -1,0 +1,276 @@
+﻿@{
+    Layout = "_LayoutHome";
+}
+
+<div class="container-fluid add-form-list">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="">
+                <div class="d-flex justify-content-between">
+                    <div class="header-title">
+                        <h3 class="card-title">Thêm danh mục</h3>
+                    </div>
+                </div>
+                <div class="">
+                    <form id="create-category-form" data-toggle="validator">
+                        <div class="row card">
+                            <div class="card-header">
+                                <h5>Thông tin danh mục</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Tên danh mục *</label>
+                                        <input id="category-name" type="text" class="form-control" placeholder="Nhập tên danh mục" required>
+                                        <div class="help-block with-errors"></div>
+                                    </div>
+                                </div>
+                                @* <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Ảnh danh mục</label>
+                                        <input type="file" class="form-control image-file" name="pic" accept="image/*">
+                                    </div>
+                                </div> *@
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="category-description">Mô tả</label>
+                                        <textarea class="form-control" id="category-description" rows="3" placeholder="Nhập mô tả cho danh mục"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row card">
+                            <div class="card-header">
+                                <h5>Thêm sản phẩm</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="custom-control custom-checkbox mb-3 ">
+                                    <input checked name="add-product-method" type="radio" class="custom-control-input " id="add-product-manual">
+                                    <label class="custom-control-label " for="add-product-manual">Thêm thủ công</label>
+                                </div>
+
+                                <div class="custom-control custom-checkbox">
+                                    <input name="add-product-method" type="radio" class="custom-control-input" id="add-product-automatically">
+                                    <label class="custom-control-label " for="add-product-automatically">Thêm tự động</label>
+                                    <div style="display:inline-block; margin: 0 10px; justify-content:start; align-items:center; gap:10px;">
+                                        <span class="d-inline-block" data-trigger="hover" data-toggle="popover" data-content="Việc thêm các sản phẩm thỏa mãn điều kiện vào danh mục sản phẩm sẽ làm thay đổi danh mục của những sản phẩm thỏa điều kiện đã có danh mục trước đó." data-original-title="Chú ý" title="">
+                                            <div class="" style="pointer-events: none;" type="button">?</div>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div id="add-product-automatically-container" style="display:none;">
+                                    <div  class="d-flex my-3" style="gap: 20px; justify-content: start; align-items: center;">
+                                        <h6>Sản phẩm phải thõa mãn: </h6>
+
+                                        <div class="custom-control custom-checkbox">
+                                            <input checked name="condition-rule" type="radio" class="custom-control-input " id="condition-rule-match-all-condition">
+                                            <label class="custom-control-label " for="condition-rule-match-all-condition">Tất cả các điều kiện</label>
+                                        </div>
+
+                                        <div class="custom-control custom-checkbox">
+                                            <input name="condition-rule" type="radio" class="custom-control-input" id="condition-rule-match-any-condition">
+                                            <label class="custom-control-label " for="condition-rule-match-any-condition">Một trong các điều kiện</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="add-product-condition-container">
+
+                                    </div>
+                                    <button type="button" class="btn-add-condition btn btn-sm btn-primary">Thêm điều kiện</button>
+
+                                </div>
+                               
+
+                            </div>
+                        </div>
+
+                        <button id="btn-create-category" type="submit" class="btn btn-primary mr-2 my-3">Thêm danh mục</button>
+                    </form>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <!-- Page end  -->
+</div>
+
+<script>
+
+    /* GLOBAL VARIABLE */
+
+    const MAXIMUM_NUMBER_OF_CONDITION = 3;
+
+    const conditions = {};
+
+
+
+
+</script>
+
+<script>
+    const categoryName = document.getElementById("category-name");
+    const categoryDesctiption = document.getElementById("category-description");
+
+    const buttonCreateCategory = document.getElementById("btn-create-category");
+    const createCategoryForm = document.getElementById("create-category-form");
+    
+
+
+
+    createCategoryForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const isAddProductManual = document.getElementById("add-product-manual").checked;
+        const isMatchAllCondition = document.getElementById("condition-rule-match-all-condition").checked
+
+        if (!isAddProductManual && Object.keys(conditions).length == 0) {
+            alert("Vui lòng nhập điều kiện để thêm sản phẩm tự động.")
+            return;
+        }
+
+        const conditionData = Object.values(conditions);
+
+        if (conditionData.some(data=> data.Value.length === 0)) {
+            alert("Vui lòng nhập giá trị cho điều kiện");
+            return;
+        }
+
+        const data = {
+            Name: categoryName.value,
+            Description: categoryDesctiption.value,
+            AddProductManual: isAddProductManual,
+            MatchAllCondition: !isAddProductManual && isMatchAllCondition,
+            Conditions: conditionData
+        }
+
+        console.log(data);
+
+        const formData = new FormData();
+
+        formData.append("category", JSON.stringify(data));
+
+        try {
+
+            buttonCreateCategory.textContent = "Đang tạo danh mục"
+            buttonCreateCategory.disabled = true;
+
+             await axios.post("/categories/create", formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data"
+                }
+            });
+
+
+            buttonCreateCategory.textContent = "Thêm danh mục"
+            buttonCreateCategory.disabled = false;
+            
+            const baseURL = window.location.origin;
+            window.location.href = baseURL + "/categories"
+
+        } catch (error) {
+            console.log(error);
+            alert("Thêm danh mục thất bại");
+        }
+
+    })
+
+</script>
+
+<script>
+    const addProductManual = document.getElementById("add-product-manual");
+    const addProductAutomatically = document.getElementById("add-product-automatically")
+    const addProductAutomaticallyContainer = document.getElementById("add-product-automatically-container");
+
+
+    addProductManual.addEventListener("change", (e)=> {
+        if (!e.target.checked) return;
+        addProductAutomaticallyContainer.style.display = "none";
+    })
+
+    addProductAutomatically.addEventListener("change", (e) => {
+        if (!e.target.checked) return;
+        addProductAutomaticallyContainer.style.display = "block";
+    })
+
+</script>
+
+<script>
+    const addProductConditionContainer = document.getElementById("add-product-condition-container");
+    const btnAddCondition = document.querySelector("#add-product-automatically-container .btn-add-condition");
+
+
+    const handleRemoveCondition = (id) => {
+        delete conditions[id]
+        addProductConditionContainer.removeChild(document.getElementById(id))
+    }
+
+    const handleChanelProductProperty = (containerId, id) => {
+        const select = document.getElementById(id);
+        conditions[containerId] = {
+            ...conditions[containerId],
+            ProductProperty: select.value,
+        }
+    } 
+
+    const handleChangeCondition = (containerId, id) => {
+        const select = document.getElementById(id);
+        conditions[containerId] = {
+            ...conditions[containerId],
+                Condition: select.value
+        }
+    }
+
+    const handleChangeConditionValue = (containerId, id) => {
+        const input = document.getElementById(id);
+        conditions[containerId] = {
+            ...conditions[containerId],
+                Value: input.value
+        }
+    }
+
+    btnAddCondition.addEventListener("click", ()=> {
+
+        if (Object.keys(conditions).length >= MAXIMUM_NUMBER_OF_CONDITION) return;
+
+
+        const conditionId =  crypto.randomUUID()
+
+        conditions[`add-product-condition-${conditionId}`] = {
+            ProductProperty: "PRODUCT_NAME",
+            Condition: "EQUAL",
+            Value: ""
+        }
+
+        const html = `
+            <div id = "add-product-condition-${conditionId}"  style="display:flex; gap: 18px;">
+               <button onClick = "handleRemoveCondition('add-product-condition-${conditionId}')" type="button" class="btn btn-outline-warning" style="height:min-content;">xóa</button>
+                        <select onChange="handleChanelProductProperty('add-product-condition-${conditionId}', 'select-product-property-${conditionId}')"
+                    id = "select-product-property-${conditionId}" class="form-control mb-3">
+                    <option value="PRODUCT_NAME">Tên sản phẩm</option>
+                    <option value="BRANCH">Nhãn hiệu</option>
+                    <option value="PRICE">Giá sản phẩm</option>
+                </select>
+                    <select
+                        onChange="handleChangeCondition('add-product-condition-${conditionId}', 'select-condition-${conditionId}')"
+                    id = "select-condition-${conditionId}" class="form-control mb-3">
+                    <option value="EQUAL">Bằng</option>
+                    <option value="START_WITH">Bắt đầu với</option>
+                    <option value="CONTAINS">Có chứa</option>
+                    <option value="NOT_CONTAINS">Không chứa</option>
+                </select>
+                    
+                           <input
+                                onChange="handleChangeConditionValue('add-product-condition-${conditionId}', 'condition-value-${conditionId}')"
+                    id = "condition-value-${conditionId}" type="text" class="form-control" required>
+                 
+               
+            </div>
+        `
+        addProductConditionContainer.insertAdjacentHTML("beforeend", html);
+
+    })
+
+</script>

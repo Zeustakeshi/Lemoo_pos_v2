@@ -24,7 +24,8 @@ namespace Lemoo_pos.Services
                 Name = name,
                 Password = password,
                 Avatar = "https://i.pravatar.cc/152",
-                Authorities = new List<AccountAuthority>()
+                Authorities = new List<AccountAuthority>(),
+                Store = store
             };
 
             Authority storeOwnerAuthority = _db.Authorities.Single(a => a.Name == "Chủ cửa hàng" && a.Store.Id == store.Id);
