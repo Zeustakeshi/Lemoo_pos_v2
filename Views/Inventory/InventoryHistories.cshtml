@@ -1,0 +1,60 @@
+﻿@model List<Lemoo_pos.Models.ViewModels.InventoryHistoryViewModel>
+@{
+    Layout = "_LayoutHome";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <h1 class="col-12">Lịch sử kho hàng</h1>
+        <div class="table-responsive rounded mb-3">
+        <table class="table data-tables tbl-server-info">
+            <thead>
+                <tr class="ligth  ligth-data">
+                    <th scope="col">Thời gian</th>
+                    <th scope="col">Chi nhánh</th>
+                    <th scope="col">Hành động</th>
+                    <th scope="col">Thay đổi bởi</th>
+                    <th scope="col" class="text-center">Tồn kho</th>
+                    <th scope="col" class="text-center">Có thể bán</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var history in Model)
+                {
+                    <tr>
+                        <th >@history.CreatedAt</th>
+                        <td>@history.BranchName</td>
+                        <td>@history.Action</td>
+                        <td>@history.UpdateBy.Account.Name</td>
+                        <td class="text-center">
+                            @if (history.NewQuantity - history.PreviousQuantity >= 0)
+                            {
+                                <h6> +@(history.NewQuantity - history.PreviousQuantity) </h6>
+                            }
+                            else
+                            {
+                                <h6> @(history.NewQuantity - history.PreviousQuantity) </h6>
+                            }
+                                <p>(@history.NewQuantity)</p>
+                        </td>
+                        <td class="text-center">
+                                @if (history.NewAvailableQuantity - history.PreviousAvailableQuantity >= 0)
+                                {
+                                    <h6> +@(history.NewAvailableQuantity - history.PreviousAvailableQuantity) </h6>
+                                }
+                                else
+                                {
+                                    <h6> @(history.NewAvailableQuantity - history.PreviousAvailableQuantity) </h6>
+                                }
+                            <p>(@history.NewAvailableQuantity)</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+
+
+

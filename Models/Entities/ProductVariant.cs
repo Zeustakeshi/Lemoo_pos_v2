@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Lemoo_pos.Models.Entities
 {
@@ -20,6 +21,8 @@ namespace Lemoo_pos.Models.Entities
         public required string BarCode { get; set; }
 
         public string? Image { get; set; }
+
+        public List<Inventory> Inventories { get; set; } = [];
 
         public List<ProductVariantAttribute> AttributeValues { get; set; } = [];
     }

@@ -20,7 +20,9 @@ namespace Lemoo_pos.Models.ViewModels
 
         public long? CategoryId { get; set; }
 
+        public required List<long> Branches { get; set; }
 
+        public  long? BrandId { get; set; }
         public List<ProductVariantViewModel> Variants { get; set; }
         public List<ProductAttributeViewModel> Attributes { get; set; }
 

@@ -10,12 +10,18 @@ namespace Lemoo_pos.Services
     public class ProductCategoryService : IProductCategoryService
     {
 
+        private readonly ISessionService _sessionService;
         private readonly AppDbContext _db;
         private readonly HttpContext _httpContext;
-        public ProductCategoryService(AppDbContext db, IHttpContextAccessor httpContextAccessor)
+        public ProductCategoryService(
+            AppDbContext db, 
+            IHttpContextAccessor httpContextAccessor, 
+            ISessionService sessionService
+         )
         {
             _db = db;
             _httpContext = httpContextAccessor.HttpContext;
+            _sessionService = sessionService;
         }
 
 
@@ -33,11 +39,7 @@ namespace Lemoo_pos.Services
 
         public void CreateCategory(CreateCategoryViewModel model)
         {
-            long storeId = Convert.ToInt64(_httpContext.Session.GetString("StoreId"));
-
-            Store store = _db.Stores.Single(s => s.Id.Equals(storeId));
-
-            if (store == null) throw new Exception("Store not found. ");
+            Store store = _sessionService.GetStoreSession();
 
             ProductCategory category = new()
             {
@@ -52,8 +54,10 @@ namespace Lemoo_pos.Services
 
             if (!model.AddProductManual) AddProductToCategory(newCategory.Id, model.Conditions, model.MatchAllCondition);
 
-
         }
+
+
+
         private async Task AddProductToCategory(long categoryId, List<CreateCategoryCondition> conditions, bool isMatchAll)
         {
             IQueryable<Product> query = _db.Products;

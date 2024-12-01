@@ -47,12 +47,28 @@ namespace Lemoo_pos.Controllers
             }
         }
 
+        [HttpDelete("{productId}")]
+        public void DeleteProduct (long productId)
+        {
+            try
+            {
+                _productService.DeleteProduct(productId);
+
+            }catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+            }
+        }
+
+
 
         [HttpGet("{productId}/variants")]
         public IActionResult ProductVariants (long productId)
         {
             return View(_productService.GetAllVariants(productId));
         }
+
+
 
         [HttpGet("{productId}/variants/{variantId}")]
         public IActionResult ProductVariantDetail(long productId, long variantId)
@@ -62,5 +78,23 @@ namespace Lemoo_pos.Controllers
 
 
 
+
+        [HttpPut("{productId}/variants/{variantId}/update")]
+        public async Task<IActionResult> UpdateProductVariant (long productId, long variantId, [FromForm] string productVariant, [FromForm] IFormFile image)
+        {
+            var variantData = System.Text.Json.JsonSerializer.Deserialize<UpdateProductVariantViewModel>(productVariant);
+
+            if (variantData == null) { return BadRequest("Product is null"); }
+
+            try
+            {
+                await _productService.UpdateProductVariant(productId, variantId, variantData, image);
+                return Json("Cập nhật biến thể thành công");
+            }catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(ex.Message);
+            }
+        }
     }
 }

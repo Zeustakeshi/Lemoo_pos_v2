@@ -3,6 +3,7 @@ using System;
 using Lemoo_pos.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Lemoo_pos.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241130170332_add-store-brand")]
+    partial class addstorebrand
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -213,86 +216,6 @@ namespace Lemoo_pos.Migrations
                     b.ToTable("Brands");
                 });
 
-            modelBuilder.Entity("Lemoo_pos.Models.Entities.Inventory", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("Available")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("BranchId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("ProductVariantId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("Quantity")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BranchId");
-
-                    b.HasIndex("ProductVariantId");
-
-                    b.ToTable("Inventories");
-                });
-
-            modelBuilder.Entity("Lemoo_pos.Models.Entities.InventoryLog", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("InventoryId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("NewAvailableQuantity")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("NewQuantity")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("PreviousAvailableQuantity")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("PreviousQuantity")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("StaffId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InventoryId");
-
-                    b.HasIndex("StaffId");
-
-                    b.ToTable("InventoryLogs");
-                });
-
             modelBuilder.Entity("Lemoo_pos.Models.Entities.Permission", b =>
                 {
                     b.Property<long>("Id")
@@ -338,9 +261,6 @@ namespace Lemoo_pos.Migrations
 
                     b.Property<string>("Image")
                         .HasColumnType("text");
-
-                    b.Property<bool?>("IsDeleted")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -664,44 +584,6 @@ namespace Lemoo_pos.Migrations
                     b.Navigation("Store");
                 });
 
-            modelBuilder.Entity("Lemoo_pos.Models.Entities.Inventory", b =>
-                {
-                    b.HasOne("Lemoo_pos.Models.Entities.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Lemoo_pos.Models.Entities.ProductVariant", "ProductVariant")
-                        .WithMany("Inventories")
-                        .HasForeignKey("ProductVariantId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("ProductVariant");
-                });
-
-            modelBuilder.Entity("Lemoo_pos.Models.Entities.InventoryLog", b =>
-                {
-                    b.HasOne("Lemoo_pos.Models.Entities.Inventory", "Inventory")
-                        .WithMany()
-                        .HasForeignKey("InventoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Lemoo_pos.Models.Entities.Staff", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Inventory");
-
-                    b.Navigation("Staff");
-                });
-
             modelBuilder.Entity("Lemoo_pos.Models.Entities.Product", b =>
                 {
                     b.HasOne("Lemoo_pos.Models.Entities.Brand", "Brand")
@@ -819,8 +701,6 @@ namespace Lemoo_pos.Migrations
             modelBuilder.Entity("Lemoo_pos.Models.Entities.ProductVariant", b =>
                 {
                     b.Navigation("AttributeValues");
-
-                    b.Navigation("Inventories");
                 });
 #pragma warning restore 612, 618
         }

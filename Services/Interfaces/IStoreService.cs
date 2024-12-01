@@ -7,5 +7,7 @@ namespace Lemoo_pos.Services.Interfaces
         Store CreateNewStore(string name);
 
         Branch CreateDefaultBranch(Store store);
+
+ 
     }
 }

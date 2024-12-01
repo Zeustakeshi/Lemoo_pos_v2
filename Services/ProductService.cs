@@ -13,20 +13,32 @@ namespace Lemoo_pos.Services
     {
         private readonly ICloudinaryService _cloudinaryService;
         private readonly AppDbContext _db;
-        private readonly HttpContext _httpContext;
+        private readonly ISessionService _sessionService;
+        private readonly IInventoryService _inventoryService;
 
-        public ProductService (ICloudinaryService cloudinaryService, AppDbContext db, IHttpContextAccessor httpContextAccessor)
+        public ProductService (
+            ICloudinaryService cloudinaryService, 
+            AppDbContext db, 
+            ISessionService sessionService,
+            IInventoryService inventoryService
+        )
         {
             _cloudinaryService = cloudinaryService;
             _db = db;
-            _httpContext = httpContextAccessor.HttpContext;
+            _inventoryService = inventoryService;
+            _sessionService = sessionService;
         }
 
 
         public List<ProductResponseViewModel> GetAllProduct()
         {
+
+            long storeId = _sessionService.GetStoreIdSession();
+
             List<Product> products = [.. _db.Products
+                .Where(product => product.Store.Id == storeId && product.IsDeleted == false)
                 .Include(p => p.Variants)
+                .Include(p => p.Brand)
                 .Include(p => p.Category)
              ];
 
@@ -41,6 +53,7 @@ namespace Lemoo_pos.Services
                     Category = product.Category,
                     Image = product.Image,
                     VariantCount = product.Variants.Count,
+                    BrandName = product.Brand?.Name,
                     CreatedAt = product.CreatedAt,
                     UpdatedAt = product.UpdatedAt
                 });
@@ -51,12 +64,8 @@ namespace Lemoo_pos.Services
 
         public async Task CreateProduct(CreateProductViewModel productData, IFormFile image)
         {
-            long storeId = Convert.ToInt64(_httpContext.Session.GetString("StoreId"));
 
-            Store store = _db.Stores.Single(s => s.Id.Equals(storeId));
-
-            if (store == null) throw new Exception("Store not found. ");
-
+            Store store = _sessionService.GetStoreSession();
         
             Product product = new()
             {
@@ -66,11 +75,10 @@ namespace Lemoo_pos.Services
                 Store = store,
             };
 
-
           
             if (image != null)
             {
-                string imageUrl = await _cloudinaryService.UploadImageAsync(image, "/products");
+                string imageUrl = await _cloudinaryService.UploadImageAsync(image, "/products", _cloudinaryService.GenerateImageId(product.Id.ToString()));
                 product.Image = imageUrl;
             }
 
@@ -94,6 +102,15 @@ namespace Lemoo_pos.Services
                 }
             }
 
+            if (productData.BrandId != null)
+            {
+                Brand brand = _db.Brands.Single(brand => brand.Id == productData.BrandId);
+                if (brand != null)
+                {
+                    product.Brand = brand;
+                    product.BrandId = brand.Id;
+                }
+            }
 
             var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
 
@@ -120,11 +137,9 @@ namespace Lemoo_pos.Services
 
                     attributeValues.Add((value.Id, attributeValue: productAttributeValue));
                 }
-
-
-
             }
 
+            List<Branch> branches = [.. _db.Branches.Where(branch => productData.Branches.Contains(branch.Id))];
 
             foreach (var variant in productData.Variants)
             {
@@ -141,7 +156,28 @@ namespace Lemoo_pos.Services
                     Image = product.Image
                 };
 
-                _db.ProductVariants.Add(productVariant);
+                var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
+
+                foreach (var branch in branches)
+                {
+                   
+
+                    try
+                    {
+                       _inventoryService.CreateInventory(
+                        newProductVariant,
+                        branch,
+                        variant.Quantity,
+                        variant.Quantity
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        await Console.Out.WriteLineAsync(ex.Message);
+                        throw new Exception("Lưu kho thất bại");
+                    }
+
+                }
 
                 foreach (var attributeId in variant.AttributeValues)
                 {
@@ -183,11 +219,31 @@ namespace Lemoo_pos.Services
 
         public ProductVariantDetailResponseViewModel GetProductVariantByIdAndProductID(long variantId, long productId)
         {
+            long storeId = _sessionService.GetStoreIdSession();
+
             var variant = _db.ProductVariants
                 .Include(v => v.AttributeValues)
                 .ThenInclude(av => av.AttributeValue)
                 .Include(v => v.Product)
-                .Where(v => v.Id == variantId && v.ProductId == productId).Single();
+                .Include(v => v.Inventories)
+                .ThenInclude(inventory => inventory.Branch)
+                .Where(v => v.Id == variantId && v.ProductId == productId && v.Product.Store.Id == storeId).Single();
+
+            List<Branch> branches = [.. _db.Branches.Where(branch => branch.StoreId == storeId)];
+
+            List<InventoryInfoViewModel> inventories = [];
+
+            foreach (var inventory in variant.Inventories)
+            {
+                inventories.Add(new()
+                    {
+                        Id = inventory.Id,
+                        BranchName = inventory.Branch.Name,
+                        Available = inventory.Available ,
+                        Quantity = inventory.Quantity 
+                    }
+                );
+            }
 
             ProductVariantDetailResponseViewModel response = new()
             {
@@ -201,10 +257,58 @@ namespace Lemoo_pos.Services
                 SkuCode = variant.SkuCode,
                 Name = String.Join("-", variant.AttributeValues.Select(a => a.AttributeValue.Value)),
                 Image = variant.Image,
-                Variants = GetAllVariants(productId).Where(v => v.Id != variantId).ToList()
+                Variants = GetAllVariants(productId).Where(v => v.Id != variantId).ToList(),
+                Inventories = inventories
             };
 
             return response;
+        }
+
+        public void DeleteProduct (long productId) 
+        {
+            Product product = _db.Products.Single(p => p.Id ==  productId);
+            if (product == null)
+            {
+                throw new Exception("Không tìm thấy sản phẩm này");
+            }
+
+
+            product.IsDeleted = true;
+
+            _db.Products.Update(product);
+
+            _db.SaveChanges();
+        }
+
+        public async Task UpdateProductVariant(long productId, long variantId, UpdateProductVariantViewModel model, IFormFile image)
+        {
+            long storeId = _sessionService.GetStoreIdSession();
+
+            var variant = _db.ProductVariants
+                .Include(v => v.Product)
+                .Where(v => v.Id == variantId && v.ProductId == productId && v.Product.Store.Id == storeId)
+                .Single() ?? throw new Exception("Không tìm thấy biến thể này");
+
+
+            variant.SkuCode = model.SkuCode;
+            variant.BarCode = model.BarCode;
+            variant.CostPrice = model.CostPrice;
+            variant.SellingPrice = model.SellingPrice;
+
+
+            if (image != null)
+            {
+                string imageUrl = await _cloudinaryService.UploadImageAsync(
+                    image, 
+                    "/products/variant/", 
+                    _cloudinaryService.GenerateImageId(variant.Id.ToString())
+                );
+
+                variant.Image = imageUrl;
+            }
+
+            _db.ProductVariants.Update(variant);
+            _db.SaveChanges();
         }
 
 
@@ -224,5 +328,7 @@ namespace Lemoo_pos.Services
                 Image = variant.Image,
             };
         }
+
+   
     }
 }

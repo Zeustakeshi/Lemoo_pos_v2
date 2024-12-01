@@ -3,7 +3,7 @@
 namespace Lemoo_pos.Controllers
 {
     [Route("settings")]
-    public class SettingController : Controller
+    public class SettingController : AuthenticationBaseController
     {
         public IActionResult Index()
         {

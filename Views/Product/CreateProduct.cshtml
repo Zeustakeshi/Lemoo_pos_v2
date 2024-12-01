@@ -63,8 +63,16 @@
                                     </div>
                              </div>
 
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 @await Component.InvokeAsync("ProductCategorySelect")
+                            </div>
+
+                            <div class="col-md-6">
+                                @await Component.InvokeAsync("BranchSelect")
+                            </div>
+
+                            <div class="col-md-12">
+                                @await Component.InvokeAsync("BrandSelect")
                             </div>
                             
 
@@ -122,7 +130,6 @@
 </div>
 
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
-
 
 
 <style>
@@ -271,7 +278,7 @@
                             </td>
                              <td class = "">
                                     <label class="toggler-wrapper style-1">
-                                          <input type="checkbox" id="default-allowSale" >
+                                              <input checked type="checkbox" id="default-allowSale" >
                                       <div class="toggler-slider">
                                         <div class="toggler-knob"></div>
                                       </div>
@@ -536,7 +543,7 @@
             </td>
             <td>
                        <label class="toggler-wrapper style-1">
-                                <input type="checkbox" id="${combination}-allowSale" >
+                                <input checked type="checkbox" id="${combination}-allowSale" >
                         <div class="toggler-slider">
                         <div class="toggler-knob"></div>
                         </div>
@@ -648,7 +655,9 @@
                     Values: Object.values(variants[key].variants)
                 };
             }),
-            CategoryId: Number(document.getElementById("categories").value)
+            CategoryId: Number(document.getElementById("categories").value),
+            BrandId: Number(document.getElementById("brands").value),
+            Branches: Array.from(document.getElementById("branches")).map(option => Number(option.value))
         };
 
        

@@ -24,9 +24,11 @@ namespace Lemoo_pos.Models.ViewModels
 
         public required DateTime UpdatedAt { get; set; }
 
+        public required List<InventoryInfoViewModel> Inventories { get; set; }
+
         public List<ProductVariantResponseViewModel>? Variants { get; set; } = [];
     }
 
-
+    
     
 }

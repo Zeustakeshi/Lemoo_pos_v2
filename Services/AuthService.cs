@@ -21,7 +21,8 @@ namespace Lemoo_pos.Services
         IMailService mailService,
         IWebHostEnvironment hostEnvironment,
         IOtpService otpService,
-        IHttpContextAccessor httpContextAccessor
+        IHttpContextAccessor httpContextAccessor,
+        ISessionService sessionService
     ) : IAuthService
     {
         private readonly int MAXIMUM_NUMBER_OF_VALIDATE_OTP_REQUEST = 3;
@@ -38,6 +39,7 @@ namespace Lemoo_pos.Services
         private readonly IOtpService _otpService = otpService;
         private readonly string serverBaseUrl = "https://localhost:7278";
         private readonly HttpContext _httpContext = httpContextAccessor.HttpContext;
+        private readonly ISessionService _sessionService = sessionService;
 
 
         public async Task<string> CreateAccount(RegisterStoreViewModel model)
@@ -144,7 +146,7 @@ namespace Lemoo_pos.Services
                 branch: defaultBranch
             );
 
-            SaveAuthSession(newAccount, newStore);
+            _sessionService.SaveAuthSession(newAccount, newStore);
 
             return newAccount;
 
@@ -168,7 +170,7 @@ namespace Lemoo_pos.Services
                 throw new Exception("Email hoặc mật khẩu không hợp lệ.");
             }
 
-            SaveAuthSession(account, account.Store);
+            _sessionService.SaveAuthSession(account, account.Store);
 
             return account;
         }
@@ -226,15 +228,6 @@ namespace Lemoo_pos.Services
             _httpContext.Session.Remove("name");
         }
 
-        private void SaveAuthSession (Account account, Store store)
-        {
-            _httpContext.Session.SetString("AccountId", account.Id.ToString());
-            _httpContext.Session.SetString("UserName", account.Name);
-            _httpContext.Session.SetString("Email", account.Email);
-            _httpContext.Session.SetString("Avatar", account.Avatar ?? "");
-            _httpContext.Session.SetString("StoreName", store.Name);
-            _httpContext.Session.SetString("StoreId", store.Id.ToString());
-        }
 
       
     }

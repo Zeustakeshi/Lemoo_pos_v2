@@ -45,10 +45,10 @@
                             <th>Hành động</th>
                         </tr>
                     </thead>
-                    <tbody class="ligth-body">
+                    <tbody class="ligth-body" id="product-list">
                         @foreach (var product in Model)
                         {
-                            <tr>
+                            <tr id="product-line-@product.Id">
                                 @* <td>
                                     <div class="checkbox d-inline-block">
                                         <input type="checkbox"
@@ -74,12 +74,12 @@
                                     </div>
                                 </td>
 
-                                <td>@product.Category?.Name</td>
+                                <td>@(!string.IsNullOrEmpty(product.Category?.Name) ? product.Category?.Name : "-")</td>
                                 <td style="text-align:center;">
                                     <h6 >(@product.VariantCount)</h6>
                                     <a href="/products/@product.Id/variants">Xem chi tiết</a>
                                 </td>
-                                <td>Lakme</td>
+                                <td>@(!string.IsNullOrEmpty(product.BrandName) ? product.BrandName : "-")</td>
                                 <td>@product.CreatedAt</td>
                                 <td>@product.UpdatedAt</td>
                                 <td>
@@ -100,17 +100,35 @@
                                            href="#">
                                             <i class="ri-pencil-line mr-0"></i>
                                         </a>
-                                        <a class="badge bg-warning mr-2"
-                                           data-toggle="tooltip"
-                                           data-placement="top"
-                                           title=""
-                                           data-original-title="Xóa"
+                                        <a data-toggle="modal" data-target="#modal-product-@product.Id" id="btn-delete-product-@product.Id"  class="badge bg-warning mr-2"
                                            href="#">
                                             <i class="ri-delete-bin-line mr-0"></i>
                                         </a>
                                     </div>
                                 </td>
+
+                                
                             </tr>
+                            <div id="modal-product-@product.Id" class="modal fade" tabindex="-1" aria-labelledby="exampleModalCenteredScrollableTitle" style="display: none;" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalCenteredScrollableTitle">Xóa sản phẩm</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">×</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Bạn có chắc muốn xóa sản phẩm này không?. Hành động này sẽ xóa tất cả sản phẩm và biến thể của sản phẩm này trên server của chúng tôi. Hành động này không thể khôi phục được.</p>
+                                           
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-outline-primary" id="btn-close-modal-delelte-product-@product.Id" data-dismiss="modal">Đóng</button>
+                                            <button type="button" class="btn btn-danger " id="btn-delelte-product-@product.Id" onclick="handleDelteProduct('@product.Id')">Xóa sản phẩm</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         }
                     </tbody>
                 </table>
@@ -120,3 +138,32 @@
     <!-- Page end  -->
 </div>
 
+
+
+
+<script>
+    const handleDelteProduct = async (productId) => {
+        const productList = document.getElementById("product-list");
+        const productLine = document.getElementById(`product-line-${productId}`)
+
+        const btnClose = document.getElementById(`btn-close-modal-delelte-product-${productId}`)
+        const btnDeleteProduct = document.getElementById(`btn-delelte-product-${productId}`);
+  
+        try {
+
+            btnDeleteProduct.disabled = true;
+            btnDeleteProduct.textContent = "Đang xóa";
+
+            await axios.delete(`/products/${productId}`);
+            productList.removeChild(productLine);
+
+            btnClose.click();
+        } catch (error) {
+            console.log(error);
+            alert("Xóa sản phẩm thất bại")
+        }
+
+        btnDeleteProduct.disabled = false;
+        btnDeleteProduct.textContent = "Xóa sản phẩm";
+    }
+</script>

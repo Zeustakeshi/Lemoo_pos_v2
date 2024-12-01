@@ -13,7 +13,13 @@ namespace Lemoo_pos.Services
         {
             _cloudinary = cloudinary;
         }
-        public async Task<string> UploadImageAsync(IFormFile file, string path)
+
+        public string GenerateImageId(string payload)
+        {
+            return Guid.NewGuid().ToString() + "_" + payload;
+        }
+
+        public async Task<string> UploadImageAsync(IFormFile file, string path, string id)
         {
             if (file == null || file.Length <= 0)
             {
@@ -26,11 +32,9 @@ namespace Lemoo_pos.Services
                 await file.CopyToAsync(memoryStream);
                 memoryStream.Position = 0; 
 
-                var fileName = string.IsNullOrEmpty(file.FileName) ? "unknown" : file.FileName;
-
                 var uploadParams = new ImageUploadParams
                 {
-                    File = new FileDescription(fileName, memoryStream),
+                    File = new FileDescription(id, memoryStream),
                     Folder = "lemoo_pos/" + path
                 };
 
@@ -60,6 +64,7 @@ namespace Lemoo_pos.Services
                 throw new Exception("An error occurred while uploading the file to Cloudinary.", ex);
             }
         }
+
 
     }
 }

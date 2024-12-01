@@ -68,6 +68,10 @@ builder.Services.AddTransient<IMailService, MailService>();
 builder.Services.AddTransient<IOtpService, OtpService>();
 builder.Services.AddTransient<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddTransient<ICloudinaryService, CloudinaryService>();
+builder.Services.AddTransient<ISessionService, SessionService>();
+builder.Services.AddTransient<IBrandService, BrandService>();
+builder.Services.AddTransient<IBranchService, BranchService>();
+builder.Services.AddTransient<IInventoryService, InventoryService>();
 
 builder.Services.AddSingleton<PasswordHelper>();
 

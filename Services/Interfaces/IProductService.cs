@@ -12,5 +12,10 @@ namespace Lemoo_pos.Services.Interfaces
         List<ProductVariantResponseViewModel> GetAllVariants(long productId);
 
         ProductVariantDetailResponseViewModel GetProductVariantByIdAndProductID(long variantId, long productId);
+
+        Task UpdateProductVariant(long productId, long variantId, UpdateProductVariantViewModel model, IFormFile image);
+
+        void DeleteProduct (long productId);
+
     }
 }

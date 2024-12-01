@@ -7,11 +7,13 @@ namespace Lemoo_pos.Services
     public class StoreService : IStoreService
     {
 
-        private readonly AppDbContext _db; 
+        private readonly AppDbContext _db;
+        private readonly HttpContext _httpContext;
 
-        public StoreService(AppDbContext db)
+        public StoreService(AppDbContext db, IHttpContextAccessor httpContextAccessor)
         {
             _db = db;
+            _httpContext = httpContextAccessor.HttpContext;
         }
 
         public Store CreateNewStore(string name)
@@ -21,9 +23,16 @@ namespace Lemoo_pos.Services
 
         public Branch CreateDefaultBranch (Store store)
         {
-            Branch defaultBranch = new() { Name = "Chi nhánh mặc định", Store = store };
+            Branch defaultBranch = new() { 
+                Name = "Chi nhánh mặc định",
+                Store = store,
+                StoreId = store.Id,
+            };
             return  _db.Branches.Add(defaultBranch).Entity;
         }
+
+        
+
 
     }
 }

@@ -12,9 +12,15 @@ namespace Lemoo_pos.Models.Entities
 
         public string? Description { get; set; }
 
+        public Brand? Brand { get; set; }
+
+        public long? BrandId { get; set; }
+
         public  ProductCategory? Category { get; set; }
 
         public long? CategoryId { get; set; }
+
+        public bool? IsDeleted { get; set; } = false;
 
         public required Store Store { get; set; }
 

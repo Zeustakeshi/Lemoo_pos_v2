@@ -21,6 +21,10 @@ namespace Lemoo_pos.Data
         public DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
         public DbSet<ProductAttribute> ProductAttributes { get; set; }
         public DbSet<ProductCategory> ProductCategories { get; set; }
+        public DbSet<Brand> Brands { get; set; }
+        public DbSet<Inventory> Inventories { get; set; }
+        public DbSet<InventoryLog> InventoryLogs { get; set; }
+      
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
