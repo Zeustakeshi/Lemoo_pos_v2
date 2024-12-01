@@ -1,0 +1,17 @@
+﻿
+<script>
+    const address = {
+        province: undefined,
+        district: undefined,
+        ward: undefined
+    };
+    <script>
+
+        <script>
+        const loadPrivinces = async () => {
+        const { data } = await axios.get("https://provinces.open-api.vn/api/p/");
+
+        console.log(data);
+    }
+    loadPrivinces()
+</script>

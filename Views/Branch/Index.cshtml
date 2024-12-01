@@ -1,0 +1,416 @@
+﻿@model List<Lemoo_pos.Models.Entities.Branch>
+@{
+    Layout = "_LayoutHome";
+}
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+                <div>
+                    <h4 class="mb-3">Danh sách chi nhánh</h4>
+                </div>
+                <button onclick="handleResetForm()"  data-toggle="modal" data-target="#exampleModalCenteredScrollable"
+                   class="btn btn-primary add-list">
+                    <i class="las la-plus mr-3"></i>Thêm chi nhánh
+                </button>
+            </div>
+        </div>
+        <div class="col-lg-12">
+            <div class="table-responsive rounded mb-3">
+                <table class="data-table table mb-0 tbl-server-info">
+                    <thead class="bg-white text-uppercase">
+                        <tr class="ligth ligth-data">
+                            <th>Tên chi nhánh</th>
+                            <th>Trạng thái</th>
+                            <th>Email liên hệ</th>
+                            <th>Địa chỉ</th>
+                            <th>Ngày tạo</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="ligth-body" id="branches">
+                        @foreach (var branch in Model)
+                        {
+                            <tr>
+                                <td class="" style="">
+                                    <h6 id="branch-name-@branch.Id">@branch.Name</h6>
+                                    @if (branch.IsDefaultBranch ?? false) {
+                                        <span class="mt-2 badge badge-pill badge-dark">Mặc định</span>
+                                    }
+                                </td>
+                                <td id="branch-status-@branch.Id">
+                                    @if (branch.IsActive ?? false)
+                                    {
+                                        <span class="mt-2 badge badge-pill badge-success">Đang hoạt động</span>
+                                    }else
+                                    {
+                                        <span class="mt-2 badge badge-pill badge-light">không hoạt động</span>
+                                    }
+                                </td>
+                                <td id="branch-email-@branch.Id">@branch.Email</td>
+                                <td id="branch-province-@branch.Id">@branch.Province</td>
+                                <td >@branch.CreatedAt</td>
+                                <td>
+                                    <button onclick='handleUpdateBranchClick({
+                                            id: @branch.Id,
+                                            province: "@branch.Province" ,
+                                            provinceCode: @branch.ProvinceCode,
+                                            district: "@branch.District" ,
+                                            districtCode: @branch.DistrictCode ,
+                                            ward: "@branch.Ward" ,
+                                            wardCode: @branch.WardCode,
+                                            branchName: "@branch.Name",
+                                            email: "@branch.Email",
+                                            isActive: "@branch.IsActive",
+                                            phone: "@branch.Phone",
+                                    
+                                    })' type="button" class="btn btn-primary mt-2" data-toggle="modal" data-target="#exampleModalCenteredScrollable">
+                                        Cập nhật
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Page end  -->
+</div>
+
+
+<div id="exampleModalCenteredScrollable" class="modal fade" tabindex="-1" aria-labelledby="exampleModalCenteredScrollableTitle" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalCenteredScrollableTitle">Thông tin chi nhánh</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body row p-4">
+                <div class = "col-6">
+                    <div class="form-group">
+                        <label>Tên chi nhánh *</label>
+                        <input id="ip-branch-name" type="text" class="form-control" placeholder="Tên chi nhánh" required>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Trạng thái</label>
+                        <select id="ip-branch-status" class="form-control mb-3">
+                            <option selected value="active">Hoạt động</option>
+                            <option value="inactive">Không hoạt động</option>
+                        </select>
+                    </div>
+                </div>
+
+                 <div class="col-6">
+                    <div class="form-group">
+                        <label>Số điện thoại</label>
+                        <input id="ip-branch-phone" type="text" class="form-control" placeholder="Số điện thoại " required>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input id="ip-branch-email" type="text" class="form-control" placeholder="Địa chỉ email" required>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Quốc gia</label>
+                        <select id="ip-branch-country" class="form-control mb-3">
+                            <option selected value="null">Việt Nam</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Tỉnh/Thành phố</label>
+                        <select id="ip-branch-province" class="form-control mb-3">
+                            
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-6">
+                    <div class="form-group">
+                        <label>Quận huyện</label>
+                        <select id="ip-branch-district" class="form-control mb-3">
+                           
+                        </select>
+                    </div>
+                </div>
+
+               <div class="col-6">
+                    <div class="form-group">
+                        <label>Phường xã</label>
+                        <select id="ip-branch-ward" class="form-control mb-3">
+                        </select>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button id="btn-close-modal" type="button" onclick="handleResetForm()" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                <button id = "btn-submit" type="button" onclick="handleSubmitForm()" class="btn btn-primary">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* global variable  *@
+
+<script>
+    const inputName = document.getElementById("ip-branch-name");
+    const inputStatus = document.getElementById("ip-branch-status");
+    const inputPhone = document.getElementById("ip-branch-phone");
+    const inputEmail = document.getElementById("ip-branch-email");
+    const inputProvince = document.getElementById("ip-branch-province");
+    const inputDistrict = document.getElementById("ip-branch-district");
+    const inputWard = document.getElementById("ip-branch-ward");
+    const addressCache = {};
+    let branchId = undefined;
+</script>
+
+
+ @* util functions *@
+<script>
+
+    const handleSubmitForm = async () => {
+        const btnSubmit = document.getElementById("btn-submit");
+
+        const province = JSON.parse(inputProvince.value);
+        const district = JSON.parse(inputDistrict.value);
+        const ward = JSON.parse(inputWard.value)
+
+        const data = {
+            Name: inputName.value,
+            Email: inputEmail.value,
+            Phone: inputPhone.value,
+            Province:  province.province,
+            ProvinceCode: province.provinceCode,
+            District: district.district,
+            DistrictCode: district.districtCode,
+            Ward: ward.ward,
+            WardCode: ward.wardCode,
+            IsActive: inputStatus.value === 'active'
+        }
+
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Đang lưu";
+
+        if (branchId) await handleUpdateBranch(branchId, data);
+        else await handleCreateNewBranch(data);
+       
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Lưu";
+
+    }
+
+    const handleUpdateBranch = async (id, data) => {
+
+        const btnClose = document.getElementById("btn-close-modal");
+
+        try {
+            await axios.put(`/branches/${id}/update`, data)
+        
+            document.getElementById(`branch-email-${id}`).textContent = data.Email;
+            document.getElementById(`branch-province-${id}`).textContent = data.Province;
+            document.getElementById(`branch-name-${id}`).textContent = data.Name;
+
+            const statusHtml = data.IsActive ? `<span class="mt-2 badge badge-pill badge-success">Đang hoạt động</span>` : `<span class="mt-2 badge badge-pill badge-light">Không hoạt động</span>`
+
+            document.getElementById(`branch-status-${id}`).innerHTML = statusHtml;
+
+            btnClose.click();
+        }catch (error) {
+            console.log(error);
+            alert("cập nhập chi nhánh thất bại");
+        }
+        
+
+    }
+
+    const handleCreateNewBranch = async (data) => {
+        const btnClose = document.getElementById("btn-close-modal");
+        const container = document.getElementById("branches");
+        try {
+            const {data: newBranch } = await axios.post(`/branches/create`, data)
+
+            console.log({newBranch})
+
+            const statusHtml = newBranch.isActive ? `<span class="mt-2 badge badge-pill badge-success">Đang hoạt động</span>` : `<span class="mt-2 badge badge-pill badge-light">Không hoạt động</span>`
+
+            const html = `
+                            <tr>
+                                <td class="" style="">
+                                    <h6 id="branch-name-${newBranch.id}">${newBranch.name}</h6>
+                                </td>
+                                <td id="branch-status-${newBranch.id}">
+                                        ${statusHtml}
+                                    </td>
+                                <td id="branch-email-${newBranch.id}">${newBranch.email}</td>
+                                <td id="branch-province-${newBranch.id}">${newBranch.province}</td>
+                                <td >${newBranch.createdAt}</td>
+                                <td>
+                                    <button onclick='handleUpdateBranchClick({
+                                            id: ${newBranch.id},
+                                            province: "${newBranch.province}" ,
+                                            provinceCode: ${newBranch.provinceCode},
+                                            district: "${newBranch.district}" ,
+                                            districtCode: ${newBranch.districtCode} ,
+                                            ward: "${newBranch.ward}" ,
+                                            wardCode: ${newBranch.wardCode},
+                                            branchName: "${newBranch.name}",
+                                            email: "${newBranch.email}",
+                                            isActive: "${newBranch.isActive}",
+                                            phone: "${newBranch.phone}",
+                                    
+                                    })' type="button" class="btn btn-primary mt-2" data-toggle="modal" data-target="#exampleModalCenteredScrollable">
+                                        Cập nhật
+                                    </button>
+                                </td>
+                            </tr>
+            `
+
+            container.insertAdjacentHTML("beforeend", html);
+            btnClose.click();
+        } catch (error) {
+            console.log(error);
+            alert("cập nhập chi nhánh thất bại");
+        }
+    }
+
+    const handleResetForm = () => {
+        inputProvince.innerHTML = "";
+        inputProvince.innerHTML = "";
+        inputDistrict.innerHTML = "";
+        inputWard.innerHTML = "";
+        inputEmail.value = "";
+        inputPhone.value = "";
+        inputName.value = "";
+        inputStatus.value = 'active'
+        branchId = undefined;
+    }
+
+    const handleUpdateBranchClick = async ({
+        branchName, email, isActive, phone, id,
+        province, provinceCode, district, districtCode, ward, wardCode, 
+    }) => {
+        inputProvince.innerHTML = `<option selected value='${JSON.stringify({ province, provinceCode })}'>${province}</option>`
+        inputDistrict.innerHTML = `<option selected value='${JSON.stringify({ district, districtCode })}'>${district}</option>`
+        inputWard.innerHTML = `<option selected value='${JSON.stringify({ ward, wardCode })}'>${ward}</option>`
+        inputEmail.value = email;
+        inputPhone.value = phone;
+        inputName.value = branchName
+        branchId = id
+
+        if (isActive == 'True') {
+            inputStatus.value = 'active'
+        }else {
+            inputStatus.value = 'inactive'
+        }
+    }
+
+    const fetchAddress =  async (type, code) => {
+        let url = `https://provinces.open-api.vn/api/${type}/search/?q=*`;
+        switch (type) {
+            case "d":
+                url += `&p=${code}`;
+            case "w":
+                url += `&d=${code}`;
+        }
+        
+        if (addressCache[url]) return addressCache[url]
+
+        const {data} =  await axios.get(url);
+        addressCache[url] = data;
+        return data;
+    };
+
+    const renderDistrict = async () => {
+        const provinceId = JSON.parse(inputProvince.value).provinceCode;
+
+        if (!provinceId) return;
+
+        inputDistrict.disabled;
+        inputDistrict.innerHTML = "<option selected>Đang tải</option>"
+
+        const districts = await fetchAddress("d", provinceId);
+
+        inputDistrict.innerHTML = "";
+
+        let htmlOptions = ``
+        districts.map(district => {
+            htmlOptions += `
+                    <option selected value='${JSON.stringify({district: district.name, districtCode: district.code})}'>${district.name}</option>
+                `
+        })
+
+        inputDistrict.innerHTML = htmlOptions
+    }
+
+    const renderWard =  async () => {
+        const districtId = JSON.parse(inputDistrict.value).districtCode;
+
+        if (!districtId) return;
+        
+        inputWard.disabled;
+        inputWard.innerHTML = "<option selected>Đang tải</option>"
+
+        const wards = await fetchAddress("w", districtId);
+
+        inputWard.innerHTML = "";
+
+        let htmlOptions = ``
+        wards.map(ward => {
+            htmlOptions += `
+                         <option selected value='${JSON.stringify({ward: ward.name, wardCode: ward.code})}'>${ward.name}</option>
+                    `
+        })
+
+        inputWard.innerHTML = htmlOptions
+    }
+
+    const renderProvince = async () => {
+
+        inputProvince.disabled;
+        inputProvince.innerHTML = "<option selected>Đang tải</option>"
+
+        const provinces = await fetchAddress("p");
+        inputProvince.innerHTML = "";
+        provinces.map(province => {
+            const htmlOption = `
+                         <option  value='${JSON.stringify({province: province.name, provinceCode: province.code})}'>${province.name}</option>
+                `
+            inputProvince.insertAdjacentHTML("beforeend", htmlOption)
+        })
+    }
+
+</script>
+
+  
+<script>
+    inputProvince.addEventListener("focus", renderProvince);
+
+    inputDistrict.addEventListener("focus", renderDistrict)
+
+    inputWard.addEventListener("focus", renderWard)
+
+    inputProvince.addEventListener("change", renderDistrict)
+
+    inputDistrict.addEventListener("change", renderWard)
+
+</script>
+
+

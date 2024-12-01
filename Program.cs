@@ -7,29 +7,31 @@ using StackExchange.Redis;
 using Lemoo_pos.Helper;
 using CloudinaryDotNet;
 
+
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 
 //cloudinary config
-var cloudinarySettings = builder.Configuration.GetSection("Cloudinary");
-var cloudName = cloudinarySettings["CloudName"];
-var apiKey = cloudinarySettings["ApiKey"];
-var apiSecret = cloudinarySettings["ApiSecret"];
-
+var cloudName = Environment.GetEnvironmentVariable("CLOUDINARY_NAME"); ;
+var apiKey = Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY");
+var apiSecret = Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET");
 
 var account = new Account(cloudName, apiKey, apiSecret);
 var cloudinary = new Cloudinary(account);
 
 
 // database configurations
-var connectionString = builder.Configuration.GetConnectionString("Postgresql");
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+var redisConnectionString = Environment.GetEnvironmentVariable("REDIS_CONNECTION_STRING");
 
-
+        
 // Add services to the container.
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
 
 builder.Services.AddSingleton(cloudinary);
 
@@ -72,6 +74,7 @@ builder.Services.AddTransient<ISessionService, SessionService>();
 builder.Services.AddTransient<IBrandService, BrandService>();
 builder.Services.AddTransient<IBranchService, BranchService>();
 builder.Services.AddTransient<IInventoryService, InventoryService>();
+builder.Services.AddTransient<IStaffService, StaffService>();
 
 builder.Services.AddSingleton<PasswordHelper>();
 

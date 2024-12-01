@@ -657,7 +657,7 @@
             }),
             CategoryId: Number(document.getElementById("categories").value),
             BrandId: Number(document.getElementById("brands").value),
-            Branches: Array.from(document.getElementById("branches")).map(option => Number(option.value))
+            Branches: Array.from(document.getElementById("branches")).filter(option => option.selected).map(option => Number(option.value))
         };
 
        

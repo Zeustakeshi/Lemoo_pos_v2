@@ -3,6 +3,7 @@ using System;
 using Lemoo_pos.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Lemoo_pos.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241201093135_add-branch-infomation")]
+    partial class addbranchinfomation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -168,14 +171,8 @@ namespace Lemoo_pos.Migrations
                     b.Property<string>("District")
                         .HasColumnType("text");
 
-                    b.Property<int?>("DistrictCode")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Email")
                         .HasColumnType("text");
-
-                    b.Property<bool?>("IsActive")
-                        .HasColumnType("boolean");
 
                     b.Property<bool?>("IsDefaultBranch")
                         .HasColumnType("boolean");
@@ -190,9 +187,6 @@ namespace Lemoo_pos.Migrations
                     b.Property<string>("Province")
                         .HasColumnType("text");
 
-                    b.Property<int?>("ProvinceCode")
-                        .HasColumnType("integer");
-
                     b.Property<long>("StoreId")
                         .HasColumnType("bigint");
 
@@ -201,9 +195,6 @@ namespace Lemoo_pos.Migrations
 
                     b.Property<string>("Ward")
                         .HasColumnType("text");
-
-                    b.Property<int?>("WardCode")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

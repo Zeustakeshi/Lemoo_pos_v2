@@ -22,7 +22,8 @@ namespace Lemoo_pos.Services
         IWebHostEnvironment hostEnvironment,
         IOtpService otpService,
         IHttpContextAccessor httpContextAccessor,
-        ISessionService sessionService
+        ISessionService sessionService,
+        IBranchService branchService
     ) : IAuthService
     {
         private readonly int MAXIMUM_NUMBER_OF_VALIDATE_OTP_REQUEST = 3;
@@ -40,7 +41,7 @@ namespace Lemoo_pos.Services
         private readonly string serverBaseUrl = "https://localhost:7278";
         private readonly HttpContext _httpContext = httpContextAccessor.HttpContext;
         private readonly ISessionService _sessionService = sessionService;
-
+        private readonly IBranchService _branchService = branchService;
 
         public async Task<string> CreateAccount(RegisterStoreViewModel model)
         {
@@ -133,7 +134,7 @@ namespace Lemoo_pos.Services
 
             Store newStore = _storeService.CreateNewStore(confirmation.StoreName);
 
-            Branch defaultBranch = _storeService.CreateDefaultBranch(newStore);
+            Branch defaultBranch = _branchService.CreateDefaultBranch(newStore, confirmation.Email, confirmation.Phone);
 
             _authorityService.InitNewStoreAuthority(newStore);
 

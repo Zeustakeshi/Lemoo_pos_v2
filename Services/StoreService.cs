@@ -21,17 +21,6 @@ namespace Lemoo_pos.Services
             return  _db.Stores.Add(new() { Name = name }).Entity;
         }
 
-        public Branch CreateDefaultBranch (Store store)
-        {
-            Branch defaultBranch = new() { 
-                Name = "Chi nhánh mặc định",
-                Store = store,
-                StoreId = store.Id,
-            };
-            return  _db.Branches.Add(defaultBranch).Entity;
-        }
-
-        
 
 
     }
