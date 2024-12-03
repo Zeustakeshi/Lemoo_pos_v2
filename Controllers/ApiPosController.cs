@@ -130,5 +130,13 @@ namespace Lemoo_pos.Controllers
                 return Json(ex.Message);
             }
         }
+
+
+        [HttpPost("orders/batch")]
+        public IActionResult CreateOrderBatch ([FromBody] List<CreateOrderDto> dto)
+        {
+            Console.WriteLine(dto);
+            return Json("oke");
+        }
     }
 }
