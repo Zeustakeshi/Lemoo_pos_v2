@@ -1,5 +1,6 @@
 ﻿using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
+using System.Security.Claims;
 using System.Xml.Serialization;
 
 namespace Lemoo_pos.Services.Interfaces
@@ -15,5 +16,15 @@ namespace Lemoo_pos.Services.Interfaces
         Account Login(LoginViewModel model);
 
         void Logout();
+
+        string GenerateResetPasswordToken(long accountId, string email);
+
+        string GetnerateAuthorizationToken(long accountId, long storeId);
+
+        ClaimsPrincipal? ValidateJwtToken(string token);
+
+        Task RecoverPassword(RecoverPasswordViewModel model);
+
+        Account ResetPassword(ResetPasswordViewModel model, string token);
     }
 }

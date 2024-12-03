@@ -1,11 +1,19 @@
 ﻿using CloudinaryDotNet;
 using Lemoo_pos.Data;
+using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq.Expressions;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
+using static System.Net.Mime.MediaTypeNames;
+using Nest;
+using System.Text.RegularExpressions;
+using Lemoo_pos.Helper;
 
 namespace Lemoo_pos.Services
 {
@@ -15,18 +23,21 @@ namespace Lemoo_pos.Services
         private readonly AppDbContext _db;
         private readonly ISessionService _sessionService;
         private readonly IInventoryService _inventoryService;
+        private readonly IElasticsearchService _elasticsearchService;
 
         public ProductService (
             ICloudinaryService cloudinaryService, 
             AppDbContext db, 
             ISessionService sessionService,
-            IInventoryService inventoryService
+            IInventoryService inventoryService,
+            IElasticsearchService elasticsearchService
         )
         {
             _cloudinaryService = cloudinaryService;
             _db = db;
             _inventoryService = inventoryService;
             _sessionService = sessionService;
+            _elasticsearchService = elasticsearchService;
         }
 
 
@@ -66,7 +77,8 @@ namespace Lemoo_pos.Services
         {
 
             Store store = _sessionService.GetStoreSession();
-        
+            Staff staff = _sessionService.GetStaffSession();
+
             Product product = new()
             {
                 Name = productData.Name,
@@ -75,11 +87,13 @@ namespace Lemoo_pos.Services
                 Store = store,
             };
 
-          
             if (image != null)
             {
                 string imageUrl = await _cloudinaryService.UploadImageAsync(image, "/products", _cloudinaryService.GenerateImageId(product.Id.ToString()));
                 product.Image = imageUrl;
+            }else
+            {
+                product.Image = "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg";
             }
 
             try
@@ -168,7 +182,8 @@ namespace Lemoo_pos.Services
                         newProductVariant,
                         branch,
                         variant.Quantity,
-                        variant.Quantity
+                        variant.Quantity,
+                        staff: staff
                         );
                     }
                     catch (Exception ex)
@@ -179,22 +194,154 @@ namespace Lemoo_pos.Services
 
                 }
 
+                List<string> variantNames = [];
+
                 foreach (var attributeId in variant.AttributeValues)
                 {
                     ProductAttributeValue value = attributeValues.FirstOrDefault(a => a.Id.Equals(attributeId)).attributeValue;
                     if (value == null) continue;
-
+                    
                     _db.ProductVariantAttributes.Add(new() { 
                         Variant = productVariant,
                         AttributeValue = value
                     });
+
+                    variantNames.Add(value.Value);
                 }
+
+                _elasticsearchService.AddDocumentWithId(new ProductSearchDto()
+                {
+                    Id = product.Id,
+                    Branches = [..productData.Branches],
+                    Name = product.Name,
+                    Price = variant.SellingPrice,
+                    Quantity = variant.Quantity,
+                    SkuCode = variant.SkuCode,
+                    StoreId = store.Id,
+                    VariantName = String.Join("-", variantNames),
+                    Image = product.Image,
+                    VariantId = newProductVariant.Id,
+                    Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + String.Join("-", variantNames)),
+                }, newProductVariant.Id.ToString(), "products");
 
             }
         
             _db.SaveChanges();
 
-                
+        }
+
+        public async Task<ProductResponseDto> CreateProduct(CreateProductDto dto, long accountId, long storeId)
+        {
+
+            Store store = _db.Stores.Single(s => s.Id.Equals(storeId)) ?? throw new Exception("Store not found");
+            Staff staff = _db.Staffs
+                .Include(s => s.Account)
+                .Single(s => s.Account.Id.Equals(accountId));
+
+            Product product = new()
+            {
+                Name = dto.Name,
+                Store = store,
+                Image = "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg"
+            };
+
+            _db.Products.Add(product);
+
+
+            var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
+
+
+            var procductAttribute = new ProductAttribute()
+            {
+                Name = "Mặc định"
+            };
+
+            _db.ProductAttributes.Add(procductAttribute);
+
+
+            var productAttributeValue = new ProductAttributeValue()
+            {
+                Attribute = procductAttribute,
+                Value = "Mặc định",
+            };
+
+            _db.ProductAttributeValues.Add(productAttributeValue);
+
+            attributeValues.Add((Guid.NewGuid().ToString(), attributeValue: productAttributeValue));
+
+            Branch branch = _db.Branches.Single(b => (b.IsDefaultBranch ?? false) && b.StoreId.Equals(storeId));
+
+            ProductVariant productVariant = new()
+            {
+                BarCode = "",
+                SellingPrice = Convert.ToInt32(dto.SellingPrice),
+                CostPrice = Convert.ToInt32(dto.CostPrice),
+                SkuCode = dto.SkuCode,
+                Product = product,
+                ProductId = product.Id,
+                Quantity = dto.Quantity,
+                AllowSale = true,
+                Image = product.Image
+            };
+
+            var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
+
+            try
+            {
+                _inventoryService.CreateInventory(
+                     newProductVariant,
+                     branch,
+                     dto.Quantity,
+                     dto.Quantity,
+                     staff: staff
+                 );
+            }
+            catch (Exception ex)
+            {
+                await Console.Out.WriteLineAsync(ex.Message);
+                throw new Exception("Lưu kho thất bại");
+            }
+
+            if (attributeValues.Count > 0)
+            {
+                ProductAttributeValue value = attributeValues[0].attributeValue;
+
+                _db.ProductVariantAttributes.Add(new()
+                {
+                    Variant = productVariant,
+                    AttributeValue = value
+                });
+            }
+
+            _db.SaveChanges();
+
+
+            _elasticsearchService.AddDocumentWithId(new ProductSearchDto()
+            {
+                Id = product.Id,
+                VariantId = newProductVariant.Id,
+                Branches = [branch.Id],
+                Name = product.Name,
+                Price = dto.SellingPrice,
+                Quantity = dto.Quantity,
+                SkuCode = dto.SkuCode,
+                StoreId = store.Id,
+                VariantName = "Mặc định",
+                Image = product.Image,
+                Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + "Mặc định"),
+            }, newProductVariant.Id.ToString(), "products");
+
+
+            return new()
+            {
+                Id = product.Id,
+                Name = product.Name,
+                Price = dto.SellingPrice,
+                Quantity = dto.Quantity,
+                VariantName = "Mặc định",
+                Image = product.Image
+
+            };
         }
 
         public List<ProductVariantResponseViewModel> GetAllVariants(long productId)
@@ -329,6 +476,6 @@ namespace Lemoo_pos.Services
             };
         }
 
-   
+       
     }
 }

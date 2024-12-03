@@ -9,6 +9,8 @@ namespace Lemoo_pos.Models.Entities
         public string? Description { get; set; }
         public required Store Store { get; set; }
 
+        public required long StoreId { get; set; }  
+
         public required List<AuthorityPermission> Permissions;
     }
 }

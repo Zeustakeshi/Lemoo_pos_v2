@@ -8,12 +8,17 @@ using System.Text.Json;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Common.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Newtonsoft.Json.Linq;
 
 namespace Lemoo_pos.Services
 {
-    public class AuthService (
-        AppDbContext db, 
-        PasswordHelper passwordHelper, 
+    public class AuthService(
+        AppDbContext db,
+        PasswordHelper passwordHelper,
         IConnectionMultiplexer redis,
         IStoreService storeService,
         IAuthorityService authorityService,
@@ -26,7 +31,11 @@ namespace Lemoo_pos.Services
         IBranchService branchService
     ) : IAuthService
     {
+
+
         private readonly int MAXIMUM_NUMBER_OF_VALIDATE_OTP_REQUEST = 3;
+        private readonly string BASE_URL = Environment.GetEnvironmentVariable("BASE_URL") ?? "https://localhost:7278";
+
 
 
         private readonly AppDbContext _db = db;
@@ -38,10 +47,11 @@ namespace Lemoo_pos.Services
         private readonly IMailService _mailService = mailService;
         private readonly IWebHostEnvironment _hostEnvironment = hostEnvironment;
         private readonly IOtpService _otpService = otpService;
-        private readonly string serverBaseUrl = "https://localhost:7278";
+        private readonly string serverBaseUrl = Environment.GetEnvironmentVariable("BASE_URL") ?? "https://localhost:7278";
         private readonly HttpContext _httpContext = httpContextAccessor.HttpContext;
         private readonly ISessionService _sessionService = sessionService;
         private readonly IBranchService _branchService = branchService;
+
 
         public async Task<string> CreateAccount(RegisterStoreViewModel model)
         {
@@ -138,14 +148,34 @@ namespace Lemoo_pos.Services
 
             _authorityService.InitNewStoreAuthority(newStore);
 
-            Account newAccount =  _accountSerivce.CreateStoreOwner(
+
+            Authority storeOwnerAuthority = _db.Authorities.Single(a => a.Name == "Chủ cửa hàng" && a.Store.Id == newStore.Id);
+
+            if (storeOwnerAuthority == null)
+            {
+                throw new Exception("Store owner authority is not found");
+            }
+
+            Account newAccount = _accountSerivce.CreateAccount(
                 email: confirmation.Email,
                 phone: confirmation.Phone,
                 name: confirmation.StoreOwnerName,
                 password: confirmation.Password,
                 store: newStore,
-                branch: defaultBranch
+                isActive: true,
+                authorities: [storeOwnerAuthority]
             );
+
+            Staff staff = new()
+            {
+                Account = newAccount,
+                Branch = defaultBranch,
+                Status = Common.Enums.StaffStatus.ACTIVE
+            };
+
+            _db.Staffs.Add(staff);
+
+            _db.SaveChanges();
 
             _sessionService.SaveAuthSession(newAccount, newStore);
 
@@ -154,17 +184,12 @@ namespace Lemoo_pos.Services
         }
 
 
-        public Account Login (LoginViewModel model)
+        public Account Login(LoginViewModel model)
         {
 
             Account account = _db.Accounts
                 .Include(a => a.Store)
-                .SingleOrDefault(a => a.Email == model.Email);
-
-            if (account == null)
-            {
-                throw new Exception("Email hoặc mật khẩu không hợp lệ.");
-            }
+                .Single(a => a.Email == model.Email && a.IsActive) ?? throw new Exception("Email hoặc mật khẩu không hợp lệ.");
 
             if (!_passwordHelper.VerifyPassword(account.Password, model.Password))
             {
@@ -176,9 +201,131 @@ namespace Lemoo_pos.Services
             return account;
         }
 
-        public void Logout ()
+        public void Logout()
         {
             _httpContext.Session.Clear();
+        }
+
+        
+        public async Task RecoverPassword (RecoverPasswordViewModel model)
+        {
+            Account account = _db.Accounts.SingleOrDefault(a => a.Email.Equals(model.Email) && a.IsActive) ?? throw new Exception("Email không tồn tại trên hệ thống");
+
+            string resetToken = GenerateResetPasswordToken(account.Id, account.Email);
+
+            await _mailService.SendResetPasswordEmail(account.Name, account.Email, BASE_URL + "/auth/reset-password?token=" + resetToken);
+        }
+
+        public string GetnerateAuthorizationToken (long accountId, long storeId)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SERCRET") ?? "hello_world"));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim("accountId", accountId.ToString()),
+                new Claim("storeId", storeId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, accountId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var token = new JwtSecurityToken(
+               issuer: BASE_URL,
+               audience: BASE_URL,
+               claims: claims,
+               expires: DateTime.Now.AddDays(2),
+               signingCredentials: credentials
+             );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public string GenerateResetPasswordToken(long accountId, string email)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SERCRET") ?? "hello_world"));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim("accountId", accountId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, accountId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var token = new JwtSecurityToken(
+               issuer: "Lemoo_pos",
+               audience: BASE_URL,
+               claims: claims,
+               expires: DateTime.Now.AddDays(30),
+               signingCredentials: credentials
+             );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public ClaimsPrincipal? ValidateJwtToken(string token)
+        {
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SERCRET") ?? "hello_world"));
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = "Lemoo_pos",
+                ValidAudience = BASE_URL,
+                IssuerSigningKey = securityKey
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+
+                var claimsPrincipal = tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken validatedToken);
+
+                return claimsPrincipal;
+            }
+            catch (Exception ex)
+            {
+                // Token không hợp lệ
+                Console.WriteLine($"Token validation failed: {ex.Message}");
+                return null;
+            }
+        }
+
+
+
+        public Account ResetPassword (ResetPasswordViewModel model, string token)
+        {
+
+      
+
+            var claimsPrincipal = ValidateJwtToken(token) ?? throw new Exception("Token không hợp lệ");
+
+
+            var accountIdString = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "accountId")?.Value;
+
+            if (accountIdString == null)
+            {
+                 throw new Exception("Token không hợp lệ");
+            }
+
+            long accountId = Convert.ToInt64(accountIdString);
+
+            Account account = _db.Accounts.Single(account => account.Id == accountId) ?? throw new Exception("Token không hợp lệ");
+
+            account.IsActive = true;
+
+            account.Password = _passwordHelper.HashPassword(model.Password);
+
+            _db.Accounts.Update(account);
+
+            _db.SaveChanges();
+
+            return account;
         }
 
 
@@ -219,7 +366,7 @@ namespace Lemoo_pos.Services
 
 
 
-        private void ClearValidationInfo (string validateionCode, string otpCode)
+        private void ClearValidationInfo(string validateionCode, string otpCode)
         {
             _redis.StringGetDelete(validateionCode);
             _otpService.ClearOtp(otpCode);
@@ -228,7 +375,6 @@ namespace Lemoo_pos.Services
             _httpContext.Session.Remove("email");
             _httpContext.Session.Remove("name");
         }
-
 
       
     }

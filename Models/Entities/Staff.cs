@@ -1,3 +1,4 @@
+using Lemoo_pos.Common.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace Lemoo_pos.Models.Entities
@@ -11,5 +12,8 @@ namespace Lemoo_pos.Models.Entities
         public DateTime? DateOfBirth { get; set; }
 
         public string? Address { get; set; }
+        public Gender? Gender { get; set; }
+
+        public required StaffStatus Status { get; set; }    
     }
 }

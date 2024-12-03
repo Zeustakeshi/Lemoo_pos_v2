@@ -6,7 +6,9 @@ namespace Lemoo_pos.Services.Interfaces
     public interface IInventoryService
     {
 
-        Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available);
+        Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available, Staff staff);
+
+
         void UpdateInventory(long id, UpdateVariantInventoryViewModel model);
         List<InventoryHistoryViewModel> GetInventoryHistories(long productVariantId);
     }

@@ -10,6 +10,8 @@ namespace Lemoo_pos.Services.Interfaces
 
         Staff GetStaffSession();
 
+        long GetAccountIdSession();
+
         void SaveAuthSession(Account account, Store store);
     }
 }

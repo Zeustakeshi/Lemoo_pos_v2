@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.Net.Http;
 using System.Security.Principal;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Lemoo_pos.Controllers
 {
@@ -94,7 +95,74 @@ namespace Lemoo_pos.Controllers
 			return View();
 		}
 
-		[HttpGet("verify-otp")]
+        [HttpPost("recoverpw")]
+        public async Task<IActionResult> RecoverPassword([FromForm] RecoverPasswordViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            try
+            {
+                await _authService.RecoverPassword(model);
+                ViewData["Success_message"] = 
+                    "Chúng tôi đã gửi mail hướng dẫn lấy lại mật khẩu đến " + model.Email + 
+                    " vui lòng kiểm tra mail của bạn và làm theo hướng dẫn để lấy lại mật khẩu";
+
+                return View();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                ViewData["Error_message"] = ex.Message;
+                return View(model);
+            }
+
+        }
+
+
+        [HttpGet("reset-password")]
+        public IActionResult ResetPassword([FromQuery] string token) 
+        {   
+            if (token == null)
+            {
+                return RedirectToAction("Login");
+            }
+            ViewData["token"] = token;  
+            return View();
+        }
+
+        [HttpPost("reset-password")]
+        public IActionResult ResetPassword([FromForm] ResetPasswordViewModel model)
+        {
+            ViewData["token"] = model.Token;
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            if (!model.Password.Equals(model.ConfirmPassword))
+            {
+                ViewData["Error_message"] = "Mật khẩu và mật khẩu nhập lại không trùng khớp";
+                return View(model);
+            }
+
+            try
+            {
+                _authService.ResetPassword(model, model.Token);
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                ViewData["Error_message"] = ex.Message;
+                return View(model);
+            }
+           
+        }
+
+        [HttpGet("verify-otp")]
 		public IActionResult VerifyOtp(string? resendErrorMessage, string? resendSuccessMaessage)
 		{		
             ViewBag.resendErrorMessage = resendErrorMessage;

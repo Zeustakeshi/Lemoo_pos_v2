@@ -20,10 +20,9 @@ namespace Lemoo_pos.Services
            _sessionService = sessionService;
         }
 
-        public Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available)
+        public Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available, Staff staff)
         {
 
-            Staff staff = _sessionService.GetStaffSession();
 
             Inventory inventory = new()
             {

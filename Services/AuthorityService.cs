@@ -1,6 +1,9 @@
-﻿using Lemoo_pos.Data;
+﻿using Lemoo_pos.Common.Enums;
+using Lemoo_pos.Data;
 using Lemoo_pos.Models.Entities;
+using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace Lemoo_pos.Services
 {
@@ -8,10 +11,12 @@ namespace Lemoo_pos.Services
     {
 
         private readonly AppDbContext _db;
+        private readonly ISessionService _sessionService;
 
-        public AuthorityService(AppDbContext db)
+        public AuthorityService(AppDbContext db, ISessionService sessionService)
         {
             _db = db;
+            _sessionService = sessionService;
         }
 
         public void InitNewStoreAuthority(Store store)
@@ -32,13 +37,13 @@ namespace Lemoo_pos.Services
 
         }
 
-
         private Authority CreateStoreOwnerAuthority(Store store)
         {
             Authority storeOwnerAuthority = new()
             {
                 Name = "Chủ cửa hàng",
                 Store = store,
+                StoreId = store.Id,
                 Description = "Chủ cửa hàng có quyền hạn cao nhất trong cửa hàng.",
                 Permissions = new List<AuthorityPermission>()
             };
@@ -61,6 +66,7 @@ namespace Lemoo_pos.Services
             {
                 Name = "Nhân viên kho",
                 Store = store,
+                StoreId = store.Id,
                 Description = "Quyền quản lý và cân bằng kho.",
                 Permissions = new List<AuthorityPermission>()
             };
@@ -95,8 +101,9 @@ namespace Lemoo_pos.Services
             {
                 Name = "Nhân viên bán hàng",
                 Store = store,
+                StoreId = store.Id,
                 Description = "Bán hàng trực tiếp tại quầy, bán hàng online.",
-                Permissions = new List<AuthorityPermission>()
+                Permissions = []
             };
 
             var sellerPermissions = new List<Common.Enums.PermissionType>
@@ -125,5 +132,68 @@ namespace Lemoo_pos.Services
             return sellerAuthority;
         }
 
+        public List<Authority> GetAllAuthorities()
+        {
+            long storeId = _sessionService.GetStoreIdSession();
+
+            List<Authority> authorities = [.. _db.Authorities
+                .Where(authority => authority.StoreId.Equals(storeId))];
+
+            return authorities;
+        }
+
+        public void CreateRole(CreateRoleViewModel model)
+        {
+            Store store = _sessionService.GetStoreSession();
+
+            bool existed = _db.Authorities
+                .Any(a => a.StoreId.Equals(store.Id) && 
+                a.Name.Equals(model.Name)
+            );
+            
+            if (existed )
+            {
+                throw new Exception("Vai trò đã tồn tại trong cửa hàng.");
+            }
+
+
+            Authority authority = new()
+            {
+                Name = model.Name,
+                Store = store,
+                StoreId = store.Id,
+                Description = model.Description,
+                Permissions = []
+            };
+
+            List<PermissionType> permissions = [];
+
+            foreach (string permission in model.Permissions)
+            {
+                if (Enum.TryParse(permission, out PermissionType permissionEnum))
+                {
+                    permissions.Add(permissionEnum);
+                }
+                else
+                {
+                    string errorMessage = $"Không thể ánh xạ giá trị '{permission}' thành enum.";
+                    Console.WriteLine(errorMessage);
+                    throw new Exception(errorMessage);
+                }
+            }
+
+            authority.Permissions.AddRange(
+                permissions.Select(permission => new AuthorityPermission
+                {
+                    Authority = authority,
+                    Permission = _db.Permissions.Single(p => p.Type == permission),
+                    AuthorityId = authority.Id
+                })
+            );
+
+            _db.Authorities.Add( authority );
+
+            _db.SaveChanges();
+        }
     }
 }

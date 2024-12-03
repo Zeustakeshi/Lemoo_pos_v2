@@ -1,0 +1,232 @@
+﻿@{
+    Layout = "_LayoutHome";
+}
+
+<div class="container-fluid add-form-list">
+    <div class="header-title">
+        <h3 class="card-title">Thêm vai trò</h3>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <div class="header-title">
+                        <h5 class="card-title">Thông tin cơ bản</h5>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form  data-toggle="validator">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Tên vai trò *</label>
+                                    <input id="ip-role-name" type="text" class="form-control" placeholder="Tên vai trò" required >
+                                    <div class="help-block with-errors"></div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="ip-role-desctiption">Mô tả</label>
+                                    <textarea class="form-control" id="ip-role-description" rows="3"></textarea>
+                                </div>
+                            </div>
+                           
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="">
+                <div class="d-flex justify-content-between">
+                    <h5 class="card-title">Phân quyền cho vai trò</h5>
+                </div>
+                <div id="permission-container" class="" style="gap:0px 20px; display:grid; grid-template-columns: 1fr 1fr;">
+
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end align-items-center mb-4">
+                <button id="btn-add-role" onclick="handleAddRole()" type="submit" class="btn btn-primary mr-2">Thêm nhân viên</button>
+            </div>
+        </div>
+
+
+
+    </div>
+    <!-- Page end  -->
+</div>
+
+<script>
+    const PermissionGroups = [
+        {
+            title: "Quản lý nhân viên",
+            permissions: [
+                { key: "VIEW_ALL_STAFF", label: "Xem danh sách nhân viên" },
+                { key: "IMPORT_STAFF_FILE", label: "Nhập file nhân viên" },
+                { key: "EXPORT_STAFF_FILE", label: "Xuất file nhân viên" },
+                { key: "ADD_STAFF", label: "Thêm nhân viên" },
+                { key: "EDIT_STAFF", label: "Sửa nhân viên" },
+                { key: "DELETE_STAFF", label: "Xóa nhân viên" },
+            ],
+        },
+        {
+            title: "Quản lý sản phẩm",
+            permissions: [
+                { key: "VIEW_ALL_PRODUCT", label: "Xem danh sách sản phẩm" },
+                { key: "IMPORT_PRODUCT_FILE", label: "Nhập file sản phẩm" },
+                { key: "EXPORT_PRODUCT_FILE", label: "Xuất file sản phẩm" },
+                { key: "ADD_PRODUCT", label: "Thêm sản phẩm" },
+                { key: "EDIT_PRODUCT", label: "Sửa sản phẩm" },
+                { key: "DELETE_PRODUCT", label: "Xóa sản phẩm" },
+            ],
+        },
+        {
+            title: "Quản lý cửa hàng",
+            permissions: [
+                { key: "ASSIGN_ROLE", label: "Phân quyền" },
+                { key: "MANAGE_BRANCH", label: "Quản lý chi nhánh" },
+                { key: "VIEW_STORE_INFO", label: "Xem thông tin cửa hàng" },
+                { key: "VIEW_ACTIVITY_LOG", label: "Xem nhật ký hoạt động" },
+            ],
+        },
+        {
+            title: "Quản lý khách hàng",
+            permissions: [
+                { key: "VIEW_ASSIGNED_CUSTOMER", label: "Xem khách hàng được phân công" },
+                { key: "VIEW_ALL_CUSTOMER", label: "Xem tất cả khách hàng" },
+                { key: "ADD_CUSTOMER", label: "Thêm khách hàng" },
+                { key: "EDIT_CUSTOMER", label: "Sửa khách hàng" },
+                { key: "DELETE_CUSTOMER", label: "Xóa khách hàng" },
+                { key: "IMPORT_CUSTOMER_FILE", label: "Nhập file khách hàng" },
+            ],
+        },
+        {
+            title: "Quản lý đơn hàng",
+            permissions: [
+                { key: "VIEW_ASSIGNED_ORDER", label: "Xem đơn hàng được phân công" },
+                { key: "VIEW_ALL_ORDER", label: "Xem tất cả đơn hàng" },
+                { key: "ADD_ORDER", label: "Thêm đơn hàng" },
+                { key: "EDIT_ORDER", label: "Sửa đơn hàng" },
+                { key: "APPROVE_ORDER", label: "Chấp nhận đơn hàng" },
+                { key: "CANCEL_ORDER", label: "Hủy đơn hàng" },
+                { key: "EXPORT_ORDER_FILE", label: "Xuất file đơn hàng" },
+                { key: "IMPORT_ORDER_FILE", label: "Nhập file đơn hàng" },
+            ],
+        },
+        {
+            title: "Kiểm hàng",
+            permissions: [
+                { key: "VIEW_AUDIT_REPORT", label: "Xem báo cáo kiểm hàng" },
+                { key: "CREATE_AUDIT_REPORT", label: "Tạo báo cáo kiểm hàng" },
+                { key: "DELETE_AUDIT_REPORT", label: "Xóa báo cáo kiểm hàng" },
+                { key: "EDIT_AUDIT_REPORT", label: "Sửa báo cáo kiểm hàng" },
+                { key: "BALANCE_WAREHOUSE", label: "Cân bằng kho" },
+                { key: "EXPORT_AUDIT_FILE", label: "Xuất file kiểm hàng" },
+                { key: "IMPORT_AUDIT_FILE", label: "Nhập file kiểm hàng" },
+            ],
+        },
+    ];
+
+
+    function generatePermissionHTML(groups) {
+        return groups
+            .map(
+                (group) => `
+                <div class="col card">
+                    <div class="m-0 p-3">
+                        <h6 class="card-title">${group.title}</h6>
+                        ${group.permissions
+                        // Nhóm permissions thành từng cặp
+                        .reduce((rows, perm, index) => {
+
+                            if (index % 2 === 0) rows.push([]);
+                            rows[rows.length - 1].push(perm);
+                            return rows;
+                        }, [])
+                        .map(
+                            (pair) => `
+                        <div class="row my-1">
+                            ${pair
+                                    .map(
+                                        (perm) => `
+                            <div class="col custom-control custom-switch custom-switch-color custom-control-inline">
+                                    <input type="checkbox" class="custom-control-input bg-primary" id="${perm.key}" data-permission-group="${perm.key}" >
+                                <label class="custom-control-label" for="${perm.key}">${perm.label}</label>
+                            </div>
+                            `
+                                    )
+                                    .join("")}
+                        </div>
+                        `
+                        )
+                        .join("")}
+                    </div>
+                </div>
+                `
+            )
+            .join("");
+        
+    }
+
+   
+    const permissionHTML = generatePermissionHTML(PermissionGroups);
+
+    const permissionContainer = document.getElementById("permission-container");
+
+    permissionContainer.innerHTML = permissionHTML;
+
+
+
+
+</script>
+
+ <script>
+
+
+     const handleAddRole = async () => {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"][data-permission-group]');
+        const btnAddRole = document.getElementById("btn-add-role");
+        const roleName = document.getElementById("ip-role-name")?.value;
+        const roleDescription = document.getElementById("ip-role-description")?.value;
+
+        const permissions = [...checkboxes].filter(checkbox => checkbox.checked).map(checkbox => checkbox.id);
+
+        if (roleName.trim().length <= 0 ) {
+            alert("Tên vai trò không được bỏ trống")
+            return;
+        }
+
+        if (permissions.length <= 0) {
+            alert("Vui lòng thêm quyền cho vai trò này")
+            return;
+        }
+
+        const data = {
+            Name: roleName,
+            Description: roleDescription,
+            Permissions: permissions
+        }
+
+         try {
+             btnAddRole.disabled = true;
+             btnAddRole.textContent = "Đang thêm vai trò";
+
+            await axios.post("/roles/create", data);
+
+            const baseURL = window.location.origin;
+            window.location.href = baseURL + "/roles"
+
+         }catch (error) {
+             console.log(error);
+             alert("Thêm vai trò thất bại");
+         }
+
+        btnAddRole.disabled = false;
+        btnAddRole.textContent = "Thêm vai trò";
+
+        
+     }
+
+ </script>

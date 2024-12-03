@@ -24,7 +24,12 @@ namespace Lemoo_pos.Data
         public DbSet<Brand> Brands { get; set; }
         public DbSet<Inventory> Inventories { get; set; }
         public DbSet<InventoryLog> InventoryLogs { get; set; }
-      
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+
+
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

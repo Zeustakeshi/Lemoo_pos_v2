@@ -1,0 +1,38 @@
+﻿@model List<Lemoo_pos.Models.Entities.Authority>
+
+<div class="form-group">
+    <label>Vai trò nhân viên</label>
+    <select size="1" id="authorities" class="form-control selectpicker " multiple data-live-search="true" title="Chọn vai trò" required>
+        @foreach (var authority in Model)
+        {
+            <option value="@authority.Id">@authority.Name</option>
+        }
+    </select>
+    <input type="hidden" id="hiddenInputForValidation" required>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectPicker = document.getElementById('branches');
+        const hiddenInput = document.getElementById('hiddenInputForValidation');
+
+        // Khi giá trị của select thay đổi
+        selectPicker.addEventListener('change', function () {
+            if (selectPicker.value && selectPicker.selectedOptions.length > 0) {
+                hiddenInput.value = 'valid'; // Gán giá trị nếu có chọn
+            } else {
+                hiddenInput.value = ''; // Xóa giá trị nếu không chọn
+            }
+        });
+
+        // Chọn mặc định option đầu tiên khi trang tải
+        if (!selectPicker.value) {
+            const firstOption = selectPicker.querySelector('option:first-child');
+            if (firstOption) {
+                firstOption.selected = true;
+            }
+            // Cập nhật giá trị hidden input
+            hiddenInput.value = 'valid';
+        }
+    });
+</script>

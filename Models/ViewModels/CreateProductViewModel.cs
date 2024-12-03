@@ -32,8 +32,8 @@ namespace Lemoo_pos.Models.ViewModels
     {
         public string Name { get; set; }
 
-        public decimal CostPrice { get; set; } = 0;
-        public decimal SellingPrice { get; set; } = 0;
+        public double CostPrice { get; set; } = 0;
+        public double SellingPrice { get; set; } = 0;
         public string SkuCode { get; set; }
         public string BarCode { get; set; }
 

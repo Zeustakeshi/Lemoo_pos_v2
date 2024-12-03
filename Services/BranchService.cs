@@ -33,8 +33,9 @@ namespace Lemoo_pos.Services
 
         public Branch CreateBranch(SaveBranchViewModel model)
         {
+            long storeId = _sessionService.GetStoreIdSession();
 
-            bool isExistedBranch = _db.Branches.Any(b => b.Name.Equals(model.Name));
+            bool isExistedBranch = _db.Branches.Any(b => b.Name.Equals(model.Name) && b.StoreId.Equals(storeId));
             if (isExistedBranch)
             {
                 throw new Exception("Tên chi nhánh đã tồn tại");

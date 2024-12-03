@@ -6,5 +6,17 @@
 
         Task SendAccountCreationOtp(string email, string otpCode);
 
+        Task SendAccountActivationEmail(
+            string email,
+            string activationLink,
+            string storeName,
+            string staffName,
+            string staffEmail,
+            string supportStorePhone,
+            string supportStoreEmail,
+            string storeOwnerName
+        );
+
+        Task SendResetPasswordEmail(string username, string email, string resetPasswordLink);
     }
 }

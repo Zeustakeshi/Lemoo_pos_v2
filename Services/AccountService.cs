@@ -1,4 +1,5 @@
 ﻿using Lemoo_pos.Data;
+using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
 
@@ -14,44 +15,52 @@ namespace Lemoo_pos.Services
             _db = db;
         }
 
-        public Account CreateStoreOwner(string email, string phone, string name, string password, Store store, Branch branch)
+        public Account CreateAccount(
+            string email, 
+            string phone, 
+            string name,
+            string password,
+            Store store,
+            bool isActive,
+            List<Authority> authorities
+         )
         {
-
-            Account storeOwnerAccount = new Account()
+            Account account = new Account()
             {
                 Email = email,
                 Phone = phone,
                 Name = name,
                 Password = password,
-                Avatar = "https://i.pravatar.cc/152",
-                Authorities = new List<AccountAuthority>(),
-                Store = store
+                Avatar = "https://res.cloudinary.com/dymmvrufy/image/upload/v1733197320/lemoo_pos/user/avatar/aqg8kncycubekkiwpvys.jpg",
+                Authorities = [],
+                Store = store,
+                IsActive = isActive
             };
 
-            Authority storeOwnerAuthority = _db.Authorities.Single(a => a.Name == "Chủ cửa hàng" && a.Store.Id == store.Id);
+            _db.Accounts.Add(account);
 
-        
-            if (storeOwnerAuthority == null)
+            foreach (Authority authority in authorities)
             {
-                throw new Exception("Store owner authority is not found");
+                AccountAuthority accountAuthority = _db.AccountAuthorities.Add(new() { Account = account, Authority = authority }).Entity;
+                account.Authorities.Add(accountAuthority);
             }
-
-            _db.Accounts.Add(storeOwnerAccount);
-
-            AccountAuthority accountAuthority = _db.AccountAuthorities.Add(new() { Account = storeOwnerAccount, Authority = storeOwnerAuthority }).Entity;
-
-            storeOwnerAccount.Authorities.Add(accountAuthority);
-
-
-            Staff staff = new() { Account = storeOwnerAccount, Branch = branch };
-
-            _db.Staffs.Add(staff);
 
             _db.SaveChanges();
 
-
-            return storeOwnerAccount;
+            return account;
         }
 
+        public AccountInfoResponseDto GetAccountById (long accountId)
+        {
+            Account account = _db.Accounts.Single(a => a.Id == accountId) ?? throw new Exception($"Account doesn't exist");
+            return new()
+            {
+                Id = accountId,
+                Email = account.Email,
+                Name = account.Name,
+                Avatar= account.Avatar,
+                Phone = account.Phone,
+            };
+        }
     }
 }

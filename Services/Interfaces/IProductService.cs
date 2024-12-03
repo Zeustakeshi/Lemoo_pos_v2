@@ -1,4 +1,5 @@
-﻿using Lemoo_pos.Models.Entities;
+﻿using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 
 namespace Lemoo_pos.Services.Interfaces
@@ -6,6 +7,8 @@ namespace Lemoo_pos.Services.Interfaces
     public interface IProductService
     {
         Task CreateProduct(CreateProductViewModel model, IFormFile image);
+
+        Task<ProductResponseDto> CreateProduct(CreateProductDto dto, long accountId, long storeId);
 
         List<ProductResponseViewModel> GetAllProduct();
 

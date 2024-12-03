@@ -21,6 +21,11 @@ namespace Lemoo_pos.Services
             return Convert.ToInt64(_httpContext.Session.GetString("StoreId"));
         }
 
+        public long GetAccountIdSession()
+        {
+            return Convert.ToInt64(_httpContext.Session.GetString("AccountId"));
+        }
+
         public Store GetStoreSession()
         {
             long storeId = Convert.ToInt64(_httpContext.Session.GetString("StoreId"));

@@ -1,4 +1,5 @@
-﻿@{
+﻿@model List<Lemoo_pos.Models.Entities.Staff>
+@{
     Layout = "_LayoutHome";
 }
 
@@ -14,7 +15,7 @@
                         Nhấp vào tên danh mục mà      bạn muốn thêm mục danh sách.
                     </p> *@
                 </div>
-                <a href="/categories/create"
+                <a href="/staffs/create"
                    class="btn btn-primary add-list">
                     <i class="las la-plus mr-3"></i> Thêm nhân viên
                 </a>
@@ -25,52 +26,60 @@
                 <table class="data-table table mb-0 tbl-server-info">
                     <thead class="bg-white text-uppercase">
                         <tr class="ligth ligth-data">
-                            <th>Mã nhân viên</th>
-                            <th>Tên danh mục</th>
-                            <th>Số lượng sản phẩm</th>
-                            <th>Ngày tạo</th>
-                            <th>Ngày cập nhật</th>
+                            <th class="text-center">Mã nhân viên</th>
+                            <th class="text-center">Tên nhân viên</th>
+                            <th class="text-center">Trạng thái</th>
+                            <th class="text-center">Vai trò</th>
+                            <th class="text-center">Ngày tham gia</th>
                             <th>Hành động</th>
                         </tr>
                     </thead>
                     <tbody class="ligth-body">
-                        <tr>
-                            <td>
-                               adsfasd
-                            </td>
-                            <td>asdfasd</td>
-                            <td>asdf</td>
-                            <td>asdfasd</td>
-                            <td>adsfsd</td>
-                            <td>
-                                <div class="d-flex align-items-center list-action">
-                                    <a class="badge badge-info mr-2"
-                                       data-toggle="tooltip"
-                                       data-placement="top"
-                                       title=""
-                                       data-original-title="View"
-                                       href="#">
-                                        <i class="ri-eye-line mr-0"></i>
-                                    </a>
-                                    <a class="badge bg-success mr-2"
-                                       data-toggle="tooltip"
-                                       data-placement="top"
-                                       title=""
-                                       data-original-title="Edit"
-                                       href="#">
-                                        <i class="ri-pencil-line mr-0"></i>
-                                    </a>
-                                    <a class="badge bg-warning mr-2"
-                                       data-toggle="tooltip"
-                                       data-placement="top"
-                                       title=""
-                                       data-original-title="Delete"
-                                       href="#">
-                                        <i class="ri-delete-bin-line mr-0"></i>
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
+                        @foreach(var staff in Model)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    @staff.Id
+                                </td>
+                                <td class="text-center">@staff.Account.Name</td>
+                                <td class="text-center">
+                                    <span  data-staff-status-value="@staff.Status" class="mt-2 badge badge-secondary"></span>
+                                </td>
+                                <td class="text-center">
+                                    <h6>@staff.Account.Authorities.Count</h6>
+                                    <a href="" >Xem tất cả</a>
+                                </td>
+                                <td class="text-center">@staff.CreatedAt</td>
+                                <td >
+                                    <div class="d-flex align-items-center list-action">
+                                        <a class="badge badge-info mr-2"
+                                           data-toggle="tooltip"
+                                           data-placement="top"
+                                           title=""
+                                           data-original-title="View"
+                                           href="#">
+                                            <i class="ri-eye-line mr-0"></i>
+                                        </a>
+                                        <a class="badge bg-success mr-2"
+                                           data-toggle="tooltip"
+                                           data-placement="top"
+                                           title=""
+                                           data-original-title="Edit"
+                                           href="#">
+                                            <i class="ri-pencil-line mr-0"></i>
+                                        </a>
+                                        <a class="badge bg-warning mr-2"
+                                           data-toggle="tooltip"
+                                           data-placement="top"
+                                           title=""
+                                           data-original-title="Delete"
+                                           href="#">
+                                            <i class="ri-delete-bin-line mr-0"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -78,3 +87,70 @@
     </div>
     <!-- Page end  -->
 </div>
+
+<script>
+
+
+    var staffStatus = document.querySelectorAll('[data-staff-status-value]');
+
+   
+    function updateStaffStatus(staffStatusElement, status) {
+
+        // Xóa bỏ các class badge cũ
+        staffStatusElement.classList.remove("badge-primary", "badge-secondary", "badge-success", "badge-danger", "badge-warning", "badge-info", "badge-light", "badge-dark");
+
+        // Gán class mới tương ứng với trạng thái
+        switch (status) {
+            case 'ACTIVE':
+                staffStatusElement.classList.add("badge-primary"); // Màu xanh dương
+                staffStatusElement.textContent = "Đang làm việc";
+                break;
+            case 'ON_LEAVE':
+                staffStatusElement.classList.add("badge-warning"); // Màu cam sáng
+                staffStatusElement.textContent = "Đang nghỉ phép";
+                break;
+            case 'RESIGNED':
+                staffStatusElement.classList.add("badge-danger"); // Màu hồng
+                staffStatusElement.textContent = "Đã từ chức";
+                break;
+            case 'RETIRED':
+                staffStatusElement.classList.add("badge-secondary"); // Màu cam
+                staffStatusElement.textContent = "Đã nghỉ hưu";
+                break;
+            case 'SUSPENDED':
+                staffStatusElement.classList.add("badge-dark"); // Màu đen
+                staffStatusElement.textContent = "Bị đình chỉ";
+                break;
+            case 'TRAINING':
+                staffStatusElement.classList.add("badge-info"); // Màu xanh nhạt
+                staffStatusElement.textContent = "Đang huấn luyện";
+                break;
+            case 'TERMINATED':
+                staffStatusElement.classList.add("badge-danger"); // Màu hồng
+                staffStatusElement.textContent = "Đã chấm dứt";
+                break;
+            case 'HIRE_NOT_STARTED':
+                staffStatusElement.classList.add("badge-light"); // Màu xám
+                staffStatusElement.textContent = "Chưa bắt đầu";
+                break;
+            case 'PENDING_INVITATION':
+                staffStatusElement.classList.add("badge-primary"); // Màu xanh dương
+                staffStatusElement.textContent = "Đang chờ mời";
+                break;
+            default:
+                console.log("Unknown status");
+                break;
+        }
+
+
+        
+    }
+
+
+    [...staffStatus].forEach(status => {
+        const statusValue = status.dataset.staffStatusValue;
+        updateStaffStatus(status, statusValue)
+    })
+
+
+</script>

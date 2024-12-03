@@ -5,14 +5,15 @@ using System.Net;
 using System.Text;
 using System.Web;
 using Microsoft.Extensions.Hosting;
+using Lemoo_pos.Models.Entities;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Lemoo_pos.Services
 {
     public class MailService : IMailService
     {
-
-        private readonly string MAIL_USER = "gaconmvp2312@gmail.com";
-        private readonly string MAIL_PASSWORD = "wdgb dheg spym wjkn";
+        private readonly string MAIL_USER = Environment.GetEnvironmentVariable("MAIL_USER") ?? "";
+        private readonly string MAIL_PASSWORD = Environment.GetEnvironmentVariable("MAIL_PASSWORD") ?? "";
 
         private readonly IWebHostEnvironment _hostEnvironment;
         public MailService(IWebHostEnvironment hostEnvironment)
@@ -31,7 +32,7 @@ namespace Lemoo_pos.Services
                 Port = 587,
                 EnableSsl = true,
                 UseDefaultCredentials = false,
-                Credentials = new NetworkCredential(MAIL_USER, MAIL_PASSWORD), 
+                Credentials = new NetworkCredential(MAIL_USER, MAIL_PASSWORD),
                 DeliveryMethod = SmtpDeliveryMethod.Network
             })
             {
@@ -52,7 +53,7 @@ namespace Lemoo_pos.Services
                 try
                 {
                     await smtp.SendMailAsync(message);
-                }catch(Exception ex)
+                } catch (Exception ex)
                 {
                     await Console.Out.WriteLineAsync(ex.Message);
                     throw;
@@ -71,5 +72,44 @@ namespace Lemoo_pos.Services
             await SendMailAsync(email, "Xác thực tài khoản", mailTemplate);
         }
 
+        public async Task SendAccountActivationEmail(
+            string email, 
+            string activationLink,
+            string storeName,
+            string staffName,
+            string staffEmail,
+            string supportStorePhone,
+            string supportStoreEmail,
+            string storeOwnerName
+        )
+        {
+            string filePath = Path.Combine(_hostEnvironment.WebRootPath, "Templates", "AccountActivation.html");
+
+            string mailTemplate = await File.ReadAllTextAsync(filePath);
+
+            mailTemplate = mailTemplate
+                                .Replace("*|STORE_NAME|*", storeName)
+                                .Replace("*|STAFF_NAME|*", staffName)
+                                .Replace("*|ACCOUNT_ACTIVATION_LINK|*", activationLink)
+                                .Replace("*|STAFF_EMAIL|*", staffEmail)
+                                .Replace("*|STORE_SUPPORT_PHONE|*", supportStorePhone)
+                                .Replace("*|STORE_SUPPORT_EMAIL|*", supportStoreEmail)
+                                .Replace("*|STORE_OWNER_NAME|*", storeOwnerName);
+            await SendMailAsync(email, "Chào mừng đến với " + storeName, mailTemplate);
+        }
+
+        public async Task SendResetPasswordEmail (string username, string email, string resetPasswordLink)
+        {
+            string filePath = Path.Combine(_hostEnvironment.WebRootPath, "Templates", "ResetPassword.html");
+
+            string mailTemplate = await File.ReadAllTextAsync(filePath);
+
+            mailTemplate = mailTemplate
+                .Replace("*|USER_NAME|*", username)
+                .Replace("*|RESET_PASSWORD_LINK|*", resetPasswordLink);
+
+
+            await SendMailAsync(email, "Hướng dẫn lấy lại mật khẩu", mailTemplate);
+        }
     }
 }
