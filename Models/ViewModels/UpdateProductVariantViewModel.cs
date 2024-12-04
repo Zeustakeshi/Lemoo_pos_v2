@@ -8,5 +8,7 @@
         public required double CostPrice { get; set; }
 
         public required double SellingPrice { get; set; }
+
+        public bool AllowNegativeInventory { get; set; } = false;
     }
 }

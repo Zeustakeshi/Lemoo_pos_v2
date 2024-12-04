@@ -169,6 +169,7 @@ namespace Lemoo_pos.Services
             Staff staff = new()
             {
                 Account = newAccount,
+                AccountId = newAccount.Id,
                 Branch = defaultBranch,
                 Status = Common.Enums.StaffStatus.ACTIVE
             };

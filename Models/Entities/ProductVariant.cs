@@ -12,8 +12,6 @@ namespace Lemoo_pos.Models.Entities
 
         public required double SellingPrice { get; set; } = 0;
 
-        public long Quantity { get; set; } = 0;
-
         public bool AllowSale { get; set; } = true;
 
         public required string SkuCode { get; set; }
@@ -21,6 +19,8 @@ namespace Lemoo_pos.Models.Entities
         public required string BarCode { get; set; }
 
         public string? Image { get; set; }
+
+        public bool AllowNegativeInventory { get; set; } = false;
 
         public List<Inventory> Inventories { get; set; } = [];
 

@@ -15,6 +15,8 @@
         public string? Image { get; set; }
         public required string SkuCode { get; set; }
 
+        public bool AllowNegativeInventory { get; set; } = false;
+
         public required string Keyword { get; set; }
 
     }

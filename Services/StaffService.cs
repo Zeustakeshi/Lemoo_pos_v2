@@ -20,9 +20,9 @@ namespace Lemoo_pos.Services
         private readonly IMailService _mailService;
         private readonly IAuthService _authService;
 
-        public StaffService  (
-            AppDbContext db, 
-            ISessionService sessionService, 
+        public StaffService(
+            AppDbContext db,
+            ISessionService sessionService,
             IAccountService accountService,
             PasswordHelper passwordHelper,
             IMailService mailService,
@@ -50,13 +50,13 @@ namespace Lemoo_pos.Services
 
             foreach (var staff in staffs)
             {
-                List<AccountAuthority> authorities =[.. _db.AccountAuthorities.Where(a => a.Account.Id == staff.Account.Id)];
+                List<AccountAuthority> authorities = [.. _db.AccountAuthorities.Where(a => a.Account.Id == staff.Account.Id)];
                 staff.Account.Authorities = authorities;
             }
             return staffs;
         }
 
-        public List<string> GetAllStaffStatus ()
+        public List<string> GetAllStaffStatus()
         {
             return [.. Enum.GetNames(typeof(StaffStatus))];
         }
@@ -67,7 +67,7 @@ namespace Lemoo_pos.Services
 
             bool existedStaff = _db.Staffs
                 .Include(s => s.Account)
-                .Any(s => s.Account.Email == model.Email || 
+                .Any(s => s.Account.Email == model.Email ||
                 s.Account.Phone == model.Phone
             );
 
@@ -76,7 +76,7 @@ namespace Lemoo_pos.Services
                 throw new Exception("Nhân viên đã tồn tại trong cửa hàng");
             }
 
-            
+
             List<Authority> authorities = [.. _db.Authorities
                 .Where(a => model.Roles.Contains(a.Id) && a.StoreId == store.Id)];
 
@@ -95,9 +95,10 @@ namespace Lemoo_pos.Services
             if (Enum.TryParse(model.Gender, out Gender gender))
             {
 
-                Staff staff = new ()
+                Staff staff = new()
                 {
                     Account = account,
+                    AccountId = account.Id,
                     Branch = branch,
                     Status = StaffStatus.PENDING_INVITATION,
                     Gender = gender,

@@ -131,19 +131,19 @@ namespace Lemoo_pos.Services
 
             foreach (var attribute in productData.Attributes)
             {
-                var procductAttribute = new ProductAttribute()
+                var productAttribute = new ProductAttribute()
                 {
                     Name = attribute.Name
                 };
 
-                _db.ProductAttributes.Add(procductAttribute);
+                _db.ProductAttributes.Add(productAttribute);
 
 
                 foreach (var value in attribute.Values)
                 {
                     var productAttributeValue = new ProductAttributeValue()
                     {
-                        Attribute = procductAttribute,
+                        Attribute = productAttribute,
                         Value = value.Name,
                     };
 
@@ -166,7 +166,8 @@ namespace Lemoo_pos.Services
                     Product = product,
                     ProductId = product.Id,
                     AllowSale = variant.AllowSale,
-                    Image = product.Image
+                    Image = product.Image,
+                    AllowNegativeInventory = productData.AllowNegativeInventory
                 };
 
                 var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
@@ -220,6 +221,7 @@ namespace Lemoo_pos.Services
                     VariantName = String.Join("-", variantNames),
                     Image = product.Image,
                     VariantId = newProductVariant.Id,
+                    AllowNegativeInventory = productData.AllowNegativeInventory,
                     Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + String.Join("-", variantNames)),
                 }, newProductVariant.Id.ToString(), "products");
 
@@ -250,17 +252,17 @@ namespace Lemoo_pos.Services
             var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
 
 
-            var procductAttribute = new ProductAttribute()
+            var productAttribute = new ProductAttribute()
             {
                 Name = "Mặc định"
             };
 
-            _db.ProductAttributes.Add(procductAttribute);
+            _db.ProductAttributes.Add(productAttribute);
 
 
             var productAttributeValue = new ProductAttributeValue()
             {
-                Attribute = procductAttribute,
+                Attribute = productAttribute,
                 Value = "Mặc định",
             };
 
@@ -268,7 +270,7 @@ namespace Lemoo_pos.Services
 
             attributeValues.Add((Guid.NewGuid().ToString(), attributeValue: productAttributeValue));
 
-            Branch branch = _db.Branches.Single(b => (b.IsDefaultBranch ?? false) && b.StoreId.Equals(storeId));
+            Branch branch = _db.Branches.Single(b => b.Id == dto.BranchId && b.StoreId == store.Id);
 
             ProductVariant productVariant = new()
             {
@@ -279,7 +281,8 @@ namespace Lemoo_pos.Services
                 Product = product,
                 ProductId = product.Id,
                 AllowSale = true,
-                Image = product.Image
+                Image = product.Image,
+                AllowNegativeInventory = dto.AllowNegativeInventory
             };
 
             var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
@@ -327,6 +330,7 @@ namespace Lemoo_pos.Services
                 VariantName = "Mặc định",
                 Image = product.Image,
                 Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + "Mặc định"),
+                AllowNegativeInventory = dto.AllowNegativeInventory
             }, newProductVariant.Id.ToString(), "products");
 
 
@@ -337,7 +341,8 @@ namespace Lemoo_pos.Services
                 Price = dto.SellingPrice,
                 Quantity = dto.Quantity,
                 VariantName = "Mặc định",
-                Image = product.Image
+                Image = product.Image,
+                BranchId = branch.Id,
 
             };
         }
@@ -420,6 +425,8 @@ namespace Lemoo_pos.Services
 
             product.IsDeleted = true;
 
+            _elasticsearchService.DeleteDocumentById("products", productId.ToString());
+
             _db.Products.Update(product);
 
             _db.SaveChanges();
@@ -464,6 +471,7 @@ namespace Lemoo_pos.Services
                 Price = updatedProductVariant.SellingPrice,
                 updatedProductVariant.SkuCode,
                 updatedProductVariant.Image,
+                updatedProductVariant.AllowNegativeInventory,
             },  updatedProductVariant.Id.ToString(), "products");
 
             _db.SaveChanges();

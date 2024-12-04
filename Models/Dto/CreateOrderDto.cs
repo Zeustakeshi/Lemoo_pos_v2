@@ -6,6 +6,8 @@
         
         public long? CustomerId { get; set; }
 
+        public required long BranchId { get; set; }
+
         public required long Total { get; set; }
 
         public required long Change { get; set; }

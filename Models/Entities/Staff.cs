@@ -5,6 +5,7 @@ namespace Lemoo_pos.Models.Entities
 {
     public class Staff : BaseEntity
     {
+        public required long AccountId {  get; set; }
         public required Account Account { get; set;}
 
         public required Branch Branch { get; set; }

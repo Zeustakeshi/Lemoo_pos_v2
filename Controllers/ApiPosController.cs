@@ -18,24 +18,27 @@ namespace Lemoo_pos.Controllers
         private readonly IOrderService _orderService;
         private readonly IAccountService _accountService;
         private readonly IBranchService _branchService;
+        private readonly ICustomerService _customerService;
 
-
-        public ApiPosController (
-            IProductService productService, 
-            ISearchService searchService, 
-            IOrderService orderService, 
+        public ApiPosController(
+            IProductService productService,
+            ISearchService searchService,
+            IOrderService orderService,
             IAccountService accountService,
-            IBranchService branchService
-        ) { 
+            IBranchService branchService,
+            ICustomerService customerService
+        )
+        {
             _productService = productService;
             _searchService = searchService;
             _orderService = orderService;
             _accountService = accountService;
             _branchService = branchService;
+            _customerService = customerService;
         }
 
         [HttpGet("account-info")]
-        public IActionResult GetAccountInfo ()
+        public IActionResult GetAccountInfo()
         {
             try
             {
@@ -63,25 +66,26 @@ namespace Lemoo_pos.Controllers
             try
             {
                 string accountIdString = User.Claims
-                    .FirstOrDefault(c => c.Type == "accountId")?.Value ?? 
+                    .FirstOrDefault(c => c.Type == "accountId")?.Value ??
                     throw new Exception("Invalid jwt token.");
 
 
                 string storeIdString = User.Claims
-                    .FirstOrDefault(c => c.Type == "storeId")?.Value ?? 
-                    throw new Exception("Invalid jwt token."); 
+                    .FirstOrDefault(c => c.Type == "storeId")?.Value ??
+                    throw new Exception("Invalid jwt token.");
 
 
                 ProductResponseDto response = await _productService.CreateProduct(
-                    dto, 
-                    Convert.ToInt64(accountIdString), 
+                    dto,
+                    Convert.ToInt64(accountIdString),
                     Convert.ToInt64(storeIdString)
                 );
 
                 Response.StatusCode = 201;
 
                 return Json(response);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Response.StatusCode = 500;
                 return Json(ex.Message);
@@ -89,7 +93,7 @@ namespace Lemoo_pos.Controllers
         }
 
         [HttpGet("products/search")]
-        public  IActionResult SearchProduct([FromQuery] string query)
+        public IActionResult SearchProduct([FromQuery] string query, [FromQuery] long branchId)
         {
             try
             {
@@ -97,7 +101,7 @@ namespace Lemoo_pos.Controllers
                     .FirstOrDefault(c => c.Type == "storeId")?.Value ??
                     throw new Exception("Invalid jwt token.");
 
-                return Json(_searchService.SearchProduct( Convert.ToInt64(storeIdString),  query));
+                return Json(_searchService.SearchProduct(Convert.ToInt64(storeIdString), branchId, query));
             }
             catch (Exception ex)
             {
@@ -108,7 +112,7 @@ namespace Lemoo_pos.Controllers
 
 
         [HttpGet("branches")]
-        public IActionResult GetAllBranch ()
+        public IActionResult GetAllBranch()
         {
             try
             {
@@ -125,8 +129,6 @@ namespace Lemoo_pos.Controllers
             }
         }
 
-
-
         [HttpPost("orders")]
         public IActionResult CreateOrder([FromBody] CreateOrderDto dto)
         {
@@ -141,7 +143,7 @@ namespace Lemoo_pos.Controllers
                     .FirstOrDefault(c => c.Type == "storeId")?.Value ??
                     throw new Exception("Invalid jwt token.");
 
-                OrderResponseDto response =  _orderService.CreateOrder(
+                OrderResponseDto response = _orderService.CreateOrder(
                     dto,
                     Convert.ToInt64(storeIdString),
                     Convert.ToInt64(accountIdString)
@@ -160,10 +162,60 @@ namespace Lemoo_pos.Controllers
 
 
         [HttpPost("orders/batch")]
-        public IActionResult CreateOrderBatch ([FromBody] List<CreateOrderDto> dto)
+        public IActionResult CreateOrderBatch([FromBody] List<CreateOrderDto> dto)
         {
             Console.WriteLine(dto);
             return Json("oke");
+        }
+
+
+        [HttpPost("customers")]
+        public IActionResult CreateCustomer([FromBody] CreateCustomerDto dto)
+        {
+            try
+            {
+                string accountIdString = User.Claims
+                    .FirstOrDefault(c => c.Type == "accountId")?.Value ??
+                    throw new Exception("Invalid jwt token.");
+
+                string storeIdString = User.Claims
+                    .FirstOrDefault(c => c.Type == "storeId")?.Value ??
+                    throw new Exception("Invalid jwt token.");
+
+                var response = _customerService.CreateCustomer(
+                    dto,
+                    Convert.ToInt64(storeIdString),
+                    Convert.ToInt64(accountIdString)
+                );
+
+                Response.StatusCode = 201;
+
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(ex.Message);
+            }
+        }
+
+        [HttpGet("customers/search")]
+        public IActionResult SearchCustomer([FromQuery] string query)
+        {
+            try
+            {
+                string storeIdString = User.Claims
+                    .FirstOrDefault(c => c.Type == "storeId")?.Value ??
+                    throw new Exception("Invalid jwt token.");
+
+                var response = _searchService.SearchCustomer(Convert.ToInt64(storeIdString), query);
+                return Json(response);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(ex.Message);
+            }
         }
     }
 }

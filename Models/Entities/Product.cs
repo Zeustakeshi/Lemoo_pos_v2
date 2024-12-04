@@ -24,6 +24,7 @@ namespace Lemoo_pos.Models.Entities
 
         public required Store Store { get; set; }
 
+
         public List<ProductVariant> Variants { get; set; } = [];
 
     }

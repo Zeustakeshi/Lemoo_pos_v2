@@ -80,11 +80,23 @@ namespace Lemoo_pos.Services
                     Total = item.Total,
                 });
 
-                if (item.Quantity <= product.Quantity)   { 
-                    product.Quantity -= item.Quantity;
-                    _db.ProductVariants.Update(product);
-                    _elasticsearchService.SaveDocumentById(new {  product.Quantity }, product.Id.ToString(), "products");
+
+                Inventory inventory = _db.Inventories
+                    .Include(inventory => inventory.Branch)
+                    .FirstOrDefault(inventory => inventory.Branch.Id == dto.BranchId && inventory.ProductVariantId == product.Id) ?? 
+                    throw new Exception("Inventory not found");
+
+                if (!product.AllowNegativeInventory && inventory.Available < item.Quantity && inventory.Quantity < item.Quantity)
+                {
+                    throw new Exception("This product not allow save negative inventory");
                 }
+
+                inventory.Available -= item.Quantity;
+                inventory.Quantity -= item.Quantity;
+
+                _db.Inventories.Update(inventory);
+
+                _elasticsearchService.SaveDocumentById(new { Quantity = inventory.Available }, product.Id.ToString(), "products");
             }
 
             _db.OrderItems.AddRange(orderItems);

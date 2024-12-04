@@ -131,6 +131,7 @@ builder.Services.AddTransient<IStaffService, StaffService>();
 builder.Services.AddTransient<IElasticsearchService, ElasticsearchService>();
 builder.Services.AddTransient<ISearchService, SearchService>();
 builder.Services.AddTransient<IOrderService, OrderService>();
+builder.Services.AddTransient<ICustomerService, CustomerService>();
 
 builder.Services.AddSingleton<PasswordHelper>();
 

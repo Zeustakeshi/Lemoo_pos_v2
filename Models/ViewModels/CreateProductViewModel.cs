@@ -23,6 +23,9 @@ namespace Lemoo_pos.Models.ViewModels
         public required List<long> Branches { get; set; }
 
         public  long? BrandId { get; set; }
+
+        public bool AllowNegativeInventory { get; set; } = false;
+
         public List<ProductVariantViewModel> Variants { get; set; }
         public List<ProductAttributeViewModel> Attributes { get; set; }
 
