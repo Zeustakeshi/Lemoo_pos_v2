@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nest;
 using System.Net;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Lemoo_pos.Controllers
 {
@@ -16,16 +17,21 @@ namespace Lemoo_pos.Controllers
         private readonly ISearchService _searchService;
         private readonly IOrderService _orderService;
         private readonly IAccountService _accountService;
+        private readonly IBranchService _branchService;
+
+
         public ApiPosController (
             IProductService productService, 
             ISearchService searchService, 
             IOrderService orderService, 
-            IAccountService accountService
+            IAccountService accountService,
+            IBranchService branchService
         ) { 
             _productService = productService;
             _searchService = searchService;
             _orderService = orderService;
             _accountService = accountService;
+            _branchService = branchService;
         }
 
         [HttpGet("account-info")]
@@ -99,6 +105,27 @@ namespace Lemoo_pos.Controllers
                 return Json(ex.Message);
             }
         }
+
+
+        [HttpGet("branches")]
+        public IActionResult GetAllBranch ()
+        {
+            try
+            {
+                string storeIdString = User.Claims
+                    .FirstOrDefault(c => c.Type == "storeId")?.Value ??
+                throw new Exception("Invalid jwt token.");
+
+                return Json(_branchService.GetAllBranchByStoreId(Convert.ToInt64(storeIdString)));
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(ex.Message);
+            }
+        }
+
+
 
         [HttpPost("orders")]
         public IActionResult CreateOrder([FromBody] CreateOrderDto dto)

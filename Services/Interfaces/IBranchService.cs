@@ -1,4 +1,5 @@
-﻿using Lemoo_pos.Models.Entities;
+﻿using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 
 namespace Lemoo_pos.Services.Interfaces
@@ -12,5 +13,7 @@ namespace Lemoo_pos.Services.Interfaces
         void UpdateBranch (long branchId, SaveBranchViewModel model);
 
         Branch CreateBranch(SaveBranchViewModel model);
+
+        List<BranchResponseDto> GetAllBranchByStoreId(long storeId);
     }
 }

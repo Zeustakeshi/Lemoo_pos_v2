@@ -53,14 +53,15 @@
                                 <td id="branch-province-@branch.Id">@branch.Province</td>
                                 <td >@branch.CreatedAt</td>
                                 <td>
+                                    
                                     <button onclick='handleUpdateBranchClick({
-                                            id: @branch.Id,
+                                            id: "@branch.Id",
                                             province: "@branch.Province" ,
-                                            provinceCode: @branch.ProvinceCode,
+                                            provinceCode: "@branch.ProvinceCode",
                                             district: "@branch.District" ,
-                                            districtCode: @branch.DistrictCode ,
+                                            districtCode: "@branch.DistrictCode" ,
                                             ward: "@branch.Ward" ,
-                                            wardCode: @branch.WardCode,
+                                            wardCode: "@branch.WardCode",
                                             branchName: "@branch.Name",
                                             email: "@branch.Email",
                                             isActive: "@branch.IsActive",
@@ -264,13 +265,13 @@
                                 <td >${newBranch.createdAt}</td>
                                 <td>
                                     <button onclick='handleUpdateBranchClick({
-                                            id: ${newBranch.id},
+                                            id: "${newBranch.id}",
                                             province: "${newBranch.province}" ,
-                                            provinceCode: ${newBranch.provinceCode},
+                                            provinceCode: "${newBranch.provinceCode}",
                                             district: "${newBranch.district}" ,
-                                            districtCode: ${newBranch.districtCode} ,
+                                            districtCode: "${newBranch.districtCode}" ,
                                             ward: "${newBranch.ward}" ,
-                                            wardCode: ${newBranch.wardCode},
+                                            wardCode: "${newBranch.wardCode}",
                                             branchName: "${newBranch.name}",
                                             email: "${newBranch.email}",
                                             isActive: "${newBranch.isActive}",
@@ -306,6 +307,12 @@
         branchName, email, isActive, phone, id,
         province, provinceCode, district, districtCode, ward, wardCode, 
     }) => {
+        
+        id = Number(id);
+        provinceCode = Number(provinceCode);
+        districtCode = Number(districtCode);
+        wardCode = Number(wardCode);
+
         inputProvince.innerHTML = `<option selected value='${JSON.stringify({ province, provinceCode })}'>${province}</option>`
         inputDistrict.innerHTML = `<option selected value='${JSON.stringify({ district, districtCode })}'>${district}</option>`
         inputWard.innerHTML = `<option selected value='${JSON.stringify({ ward, wardCode })}'>${ward}</option>`

@@ -1,4 +1,5 @@
 ﻿using Lemoo_pos.Data;
+using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
@@ -71,6 +72,24 @@ namespace Lemoo_pos.Services
         {
             long storeId = _sessionService.GetStoreIdSession();
             return [.. _db.Branches.Where(branch => branch.StoreId == storeId)];
+        }
+
+        public List<BranchResponseDto> GetAllBranchByStoreId (long storeId)
+        {
+            List<Branch> branches = [.. _db.Branches.Where(branch => branch.StoreId == storeId)];
+
+            List<BranchResponseDto> branchResponseDtos = [];
+
+            foreach (var branch in branches)
+            {
+                branchResponseDtos.Add(new()
+                {
+                   Id = branch.Id,
+                   Name = branch.Name,
+                   Address = branch.Province != null ?  $"{branch.Ward}, {branch.District}, {branch.Province}" : null
+                });
+            }
+            return branchResponseDtos;
         }
 
         public void UpdateBranch (long branchId, SaveBranchViewModel model)

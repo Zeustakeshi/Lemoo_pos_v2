@@ -166,6 +166,18 @@ app.UseCors(policy =>
 
 app.Use(async (context, next) =>
 {
+    //var headers = context.Request.Headers;
+    //await Console.Out.WriteLineAsync();
+    //await Console.Out.WriteLineAsync();
+    //await Console.Out.WriteLineAsync("======================================================= || ======================================================");
+    //foreach (var header in headers)
+    //{
+    //    await Console.Out.WriteLineAsync($"key={header.Key}: {header.Value}");
+    //}
+    //await Console.Out.WriteLineAsync("======================================================= || ======================================================");
+    //await Console.Out.WriteLineAsync();
+    //await Console.Out.WriteLineAsync();
+
     await next.Invoke();
 });
 

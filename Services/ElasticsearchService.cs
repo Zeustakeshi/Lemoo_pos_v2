@@ -1,5 +1,6 @@
 ﻿using Lemoo_pos.Services.Interfaces;
 using Nest;
+using System.Reflection.Metadata;
 
 namespace Lemoo_pos.Services
 {
@@ -12,23 +13,33 @@ namespace Lemoo_pos.Services
             _client = client;
         }
 
-        public void AddDocumentWithId<T>(T document, string id, string index) where T : class
+        //public void AddDocumentWithId<T>(T document, string id, string index) where T : class
+        //{
+        //    EnsureIndexExists(index);
+
+        //    var response = _client.Index(document, i => i
+        //        .Index(index)
+        //        .Id(id)
+        //    );
+
+        //    if (response.IsValid)
+        //    {
+        //        Console.WriteLine($"Document with ID {id} indexed successfully!");
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine($"Failed to index document: {response.OriginalException.Message}");
+        //    }
+        //}
+
+        public async Task SaveDocumentById<T>(T document, string id, string index) where T : class
         {
             EnsureIndexExists(index);
-
-            var response = _client.Index(document, i => i
-                .Index(index)
-                .Id(id)
+            var response =  await _client.UpdateAsync<T>(id, u => u
+                .Index(index) 
+                .Doc(document)
+                .DocAsUpsert(true) 
             );
-
-            if (response.IsValid)
-            {
-                Console.WriteLine($"Document with ID {id} indexed successfully!");
-            }
-            else
-            {
-                Console.WriteLine($"Failed to index document: {response.OriginalException.Message}");
-            }
         }
 
 

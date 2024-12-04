@@ -1,4 +1,7 @@
 ﻿importScripts("https://cdn.jsdelivr.net/npm/dexie@3.2.5/dist/dexie.min.js");
+importScripts(
+    "https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.8/axios.min.js"
+);
 
 function openDatabase() {
     return new Promise((resolve, reject) => {
@@ -8,36 +11,18 @@ function openDatabase() {
     });
 }
 
-async function syncOrders() {
-    try {
-        const orders = await getAllOrders();
-        console.log({ orders });
-        if (orders.length === 0) {
-            console.log("[SW] Không có đơn hàng để đồng bộ.");
-            return;
-        }
-
-        // Gửi đơn hàng lên server qua API batch
-        const response = await fetch("/api/pos/orders/batch", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(orders.map((order) => order.data)),
-        });
-
-        if (response.ok) {
-            console.log("[SW] Đồng bộ thành công!");
-            // Xóa các đơn hàng đã được đồng bộ
-            for (const order of orders) {
-                await deleteOrder(order.id);
-            }
-        } else {
-            console.error("[SW] Đồng bộ thất bại!", await response.text());
-        }
-    } catch (error) {
-        console.error("[SW] Lỗi khi đồng bộ:", error);
+function chunkArray(array, size) {
+    const chunks = [];
+    for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
     }
+    return chunks;
+}
+
+async function sleep(ms) {
+    return new Promise((rs) => {
+        setTimeout(rs, ms);
+    });
 }
 
 async function getAllOrders() {
@@ -62,20 +47,59 @@ async function deleteOrder(id) {
         const request = store.delete(id);
 
         request.onsuccess = () => {
-            console.log(`[SW] Đã xóa đơn hàng có ID ${id} khỏi IndexedDB.`);
+            console.log(
+                `[SW] Order with ID ${id} has been removed from IndexedDB.`
+            );
             resolve();
         };
 
         request.onerror = (event) => {
-            console.error("[SW] Lỗi khi xóa đơn hàng:", event.target.error);
+            console.error(
+                "[SW] Error while deleting order:",
+                event.target.error
+            );
             reject(event.target.error);
         };
     });
 }
 
+async function insertSyncOrderLog() { }
+
+async function syncOrders() {
+    try {
+        const orders = await getAllOrders();
+
+        if (orders.length === 0) {
+            console.log("[SW] No orders to synchronize.");
+            return;
+        }
+
+        const chunks = chunkArray(orders, 10);
+
+        for (const chunk of chunks) {
+            try {
+                await axios.post("/api/test/test-1", chunk);
+
+                for (const order of chunk) {
+                    await deleteOrder(order.id);
+                }
+
+                console.log(
+                    `[SW] Successfully synchronized a batch of ${chunk.length} orders!`
+                );
+            } catch (error) {
+                console.error("[SW] Synchronization failed!");
+            }
+        }
+        console.log("[SW] Completed synchronization of all orders.");
+    } catch (error) {
+        console.error("[SW] Error during synchronization:", error);
+    }
+}
+
 self.addEventListener("sync", (event) => {
     if (event.tag === "sync-orders") {
-        console.log("[SW] Đang xử lý đồng bộ...");
+        console.log("[SW] Processing Order synchronization...");
         event.waitUntil(syncOrders());
     }
 });

@@ -12,7 +12,7 @@ namespace Lemoo_pos.Models.Entities
 
         public required double SellingPrice { get; set; } = 0;
 
-        public required long Quantity { get; set; } = 0;
+        public long Quantity { get; set; } = 0;
 
         public bool AllowSale { get; set; } = true;
 

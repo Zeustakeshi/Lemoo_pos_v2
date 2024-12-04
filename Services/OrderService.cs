@@ -11,7 +11,11 @@ namespace Lemoo_pos.Services
     public class OrderService : IOrderService
     {
         private readonly AppDbContext _db;
-        public OrderService(AppDbContext db) {
+        private readonly IElasticsearchService _elasticsearchService;
+
+
+        public OrderService(AppDbContext db, IElasticsearchService elasticsearchService) {
+            _elasticsearchService = elasticsearchService;
             _db = db;
         }
 
@@ -61,7 +65,9 @@ namespace Lemoo_pos.Services
             foreach (var item in dto.Items)
             {
 
-                ProductVariant product = _db.ProductVariants.Single(p => p.Id == item.ProductId) ??
+                ProductVariant product = _db.ProductVariants
+                    .Include(p => p.Inventories)
+                    .Single(p => p.Id == item.ProductId) ??
                     throw new Exception($"Product with {item.ProductId} doesn't exist");
 
                 orderItems.Add(new()
@@ -74,9 +80,11 @@ namespace Lemoo_pos.Services
                     Total = item.Total,
                 });
 
-                if (item.Quantity < product.Quantity)   product.Quantity -= item.Quantity; 
-
-                _db.ProductVariants.Update(product);
+                if (item.Quantity <= product.Quantity)   { 
+                    product.Quantity -= item.Quantity;
+                    _db.ProductVariants.Update(product);
+                    _elasticsearchService.SaveDocumentById(new {  product.Quantity }, product.Id.ToString(), "products");
+                }
             }
 
             _db.OrderItems.AddRange(orderItems);

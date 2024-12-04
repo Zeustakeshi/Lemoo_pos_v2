@@ -1,4 +1,5 @@
 ﻿using Lemoo_pos.Data;
+using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
@@ -12,12 +13,13 @@ namespace Lemoo_pos.Services
 
         private readonly AppDbContext _db;
         private readonly ISessionService _sessionService;
-      
+        private readonly IElasticsearchService _elasticsearchService;
 
-        public InventoryService(AppDbContext db, ISessionService sessionService) { 
+        public InventoryService(AppDbContext db, ISessionService sessionService, IElasticsearchService elasticsearchService) { 
         
             _db = db;
            _sessionService = sessionService;
+            _elasticsearchService = elasticsearchService;
         }
 
         public Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available, Staff staff)
@@ -33,6 +35,9 @@ namespace Lemoo_pos.Services
                 Quantity = quantity,
             };
 
+          
+
+           
             var newInventory = _db.Inventories.Add(inventory).Entity;
 
             InventoryLog log = new()
@@ -96,7 +101,9 @@ namespace Lemoo_pos.Services
         {
             Staff staff = _sessionService.GetStaffSession();
 
-            Inventory inventory = _db.Inventories.Single(inventory => inventory.Id == id) ?? throw new Exception("Không tìm thấy thông tin kho");
+            Inventory inventory = _db.Inventories
+                .Include(inventory => inventory.ProductVariant)
+                .Single(inventory => inventory.Id == id) ?? throw new Exception("Không tìm thấy thông tin kho");
             if (inventory.Quantity == model.Quantity && inventory.Available == model.Available) return;
 
             InventoryLog log = new()
@@ -122,7 +129,11 @@ namespace Lemoo_pos.Services
 
             _db.SaveChanges();
 
-         
+            _elasticsearchService.SaveDocumentById(new
+            {
+                Quantity = model.Available,
+            }, inventory.ProductVariant.ProductId.ToString(), "products");
+
         }
 
 

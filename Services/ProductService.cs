@@ -165,7 +165,6 @@ namespace Lemoo_pos.Services
                     SkuCode = variant.SkuCode,
                     Product = product,
                     ProductId = product.Id,
-                    Quantity = variant.Quantity,
                     AllowSale = variant.AllowSale,
                     Image = product.Image
                 };
@@ -184,7 +183,7 @@ namespace Lemoo_pos.Services
                         variant.Quantity,
                         variant.Quantity,
                         staff: staff
-                        );
+                       );
                     }
                     catch (Exception ex)
                     {
@@ -209,7 +208,7 @@ namespace Lemoo_pos.Services
                     variantNames.Add(value.Value);
                 }
 
-                _elasticsearchService.AddDocumentWithId(new ProductSearchDto()
+                await _elasticsearchService.SaveDocumentById(new ProductSearchDto()
                 {
                     Id = product.Id,
                     Branches = [..productData.Branches],
@@ -279,7 +278,6 @@ namespace Lemoo_pos.Services
                 SkuCode = dto.SkuCode,
                 Product = product,
                 ProductId = product.Id,
-                Quantity = dto.Quantity,
                 AllowSale = true,
                 Image = product.Image
             };
@@ -316,7 +314,7 @@ namespace Lemoo_pos.Services
             _db.SaveChanges();
 
 
-            _elasticsearchService.AddDocumentWithId(new ProductSearchDto()
+            await _elasticsearchService.SaveDocumentById(new ProductSearchDto()
             {
                 Id = product.Id,
                 VariantId = newProductVariant.Id,
@@ -454,7 +452,20 @@ namespace Lemoo_pos.Services
                 variant.Image = imageUrl;
             }
 
-            _db.ProductVariants.Update(variant);
+            ProductVariant updatedProductVariant = _db.ProductVariants.Update(variant).Entity;
+
+            Product product = updatedProductVariant.Product;
+
+            await _elasticsearchService.SaveDocumentById(new
+            {
+                product.Id,
+                VariantId = updatedProductVariant.Id,
+                updatedProductVariant.Product.Name,
+                Price = updatedProductVariant.SellingPrice,
+                updatedProductVariant.SkuCode,
+                updatedProductVariant.Image,
+            },  updatedProductVariant.Id.ToString(), "products");
+
             _db.SaveChanges();
         }
 

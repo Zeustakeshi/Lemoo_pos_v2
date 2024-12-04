@@ -22,6 +22,5 @@ namespace Lemoo_pos.Services
         }
 
 
-
     }
 }
