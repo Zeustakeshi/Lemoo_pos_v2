@@ -177,19 +177,15 @@ namespace Lemoo_pos.Controllers
                 string accountIdString = User.Claims
                     .FirstOrDefault(c => c.Type == "accountId")?.Value ??
                     throw new Exception("Invalid jwt token.");
-
                 string storeIdString = User.Claims
                     .FirstOrDefault(c => c.Type == "storeId")?.Value ??
                     throw new Exception("Invalid jwt token.");
-
                 var response = _customerService.CreateCustomer(
                     dto,
                     Convert.ToInt64(storeIdString),
                     Convert.ToInt64(accountIdString)
                 );
-
                 Response.StatusCode = 201;
-
                 return Json(response);
             }
             catch (Exception ex)

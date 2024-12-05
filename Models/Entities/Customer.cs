@@ -21,6 +21,5 @@ namespace Lemoo_pos.Models.Entities
         public int? DistrictCode { get; set; }
         public int? WardCode { get; set; }
         public List<Order> Orders { get; set; } = [];
-
     }
 }

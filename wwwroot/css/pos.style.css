@@ -1224,6 +1224,9 @@ body::-webkit-scrollbar,
 .col-span-2 {
     grid-column: span 2 / span 2;
 }
+.col-span-3 {
+    grid-column: span 3 / span 3;
+}
 .col-span-4 {
     grid-column: span 4 / span 4;
 }
@@ -1358,8 +1361,14 @@ body::-webkit-scrollbar,
 .h-9 {
     height: 2.25rem;
 }
+.h-\[120px\] {
+    height: 120px;
+}
 .h-\[1px\] {
     height: 1px;
+}
+.h-\[500px\] {
+    height: 500px;
 }
 .h-\[50px\] {
     height: 50px;
@@ -1452,6 +1461,9 @@ body::-webkit-scrollbar,
 .w-\[100px\] {
     width: 100px;
 }
+.w-\[120px\] {
+    width: 120px;
+}
 .w-\[180px\] {
     width: 180px;
 }
@@ -1460,9 +1472,6 @@ body::-webkit-scrollbar,
 }
 .w-\[2px\] {
     width: 2px;
-}
-.w-\[300px\] {
-    width: 300px;
 }
 .w-\[50px\] {
     width: 50px;
@@ -1484,6 +1493,9 @@ body::-webkit-scrollbar,
 }
 .min-w-\[20px\] {
     min-width: 20px;
+}
+.min-w-\[300px\] {
+    min-width: 300px;
 }
 .min-w-\[500px\] {
     min-width: 500px;
@@ -1590,6 +1602,9 @@ body::-webkit-scrollbar,
 .grid-cols-3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.grid-cols-8 {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+}
 .flex-col {
     flex-direction: column;
 }
@@ -1631,6 +1646,10 @@ body::-webkit-scrollbar,
 }
 .gap-5 {
     gap: 1.25rem;
+}
+.gap-x-5 {
+    -moz-column-gap: 1.25rem;
+    column-gap: 1.25rem;
 }
 .space-x-2 > :not([hidden]) ~ :not([hidden]) {
     --tw-space-x-reverse: 0;
@@ -1725,6 +1744,10 @@ body::-webkit-scrollbar,
 .bg-black\/80 {
     background-color: #000c;
 }
+.bg-blue-100 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(219 234 254 / var(--tw-bg-opacity, 1));
+}
 .bg-blue-200 {
     --tw-bg-opacity: 1;
     background-color: rgb(191 219 254 / var(--tw-bg-opacity, 1));
@@ -1771,6 +1794,10 @@ body::-webkit-scrollbar,
 .bg-slate-50 {
     --tw-bg-opacity: 1;
     background-color: rgb(248 250 252 / var(--tw-bg-opacity, 1));
+}
+.bg-stone-100 {
+    --tw-bg-opacity: 1;
+    background-color: rgb(245 245 244 / var(--tw-bg-opacity, 1));
 }
 .bg-transparent {
     background-color: transparent;
@@ -1862,6 +1889,10 @@ body::-webkit-scrollbar,
     padding-top: 0.75rem;
     padding-bottom: 0.75rem;
 }
+.py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
 .py-8 {
     padding-top: 2rem;
     padding-bottom: 2rem;
@@ -1886,6 +1917,9 @@ body::-webkit-scrollbar,
 }
 .text-right {
     text-align: right;
+}
+.text-start {
+    text-align: start;
 }
 .align-middle {
     vertical-align: middle;
@@ -1919,6 +1953,9 @@ body::-webkit-scrollbar,
 }
 .font-medium {
     font-weight: 500;
+}
+.font-normal {
+    font-weight: 400;
 }
 .font-semibold {
     font-weight: 600;
@@ -2228,6 +2265,9 @@ body::-webkit-scrollbar,
 }
 .focus-within\:border-primary:focus-within {
     border-color: hsl(var(--primary));
+}
+.hover\:cursor-pointer:hover {
+    cursor: pointer;
 }
 .hover\:bg-accent:hover {
     background-color: hsl(var(--accent));
