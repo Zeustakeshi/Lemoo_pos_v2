@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Lemoo_pos.Controllers
 {
-    [Route("pos")]
+    [Route("pos/")]
     public class PosController : AuthenticationBaseController
     {
 
         private readonly IAuthService _authService;
         private readonly ISessionService _sessionService;
-        public PosController (IAuthService authService, ISessionService sessionService)
+        public PosController(IAuthService authService, ISessionService sessionService)
         {
             _authService = authService;
             _sessionService = sessionService;
@@ -25,9 +25,9 @@ namespace Lemoo_pos.Controllers
 
             Response.Cookies.Append("access_token", token, new CookieOptions
             {
-                Expires = DateTimeOffset.Now.AddDays(2), 
-                HttpOnly = false, 
-                Secure = false,   
+                Expires = DateTimeOffset.Now.AddDays(2),
+                HttpOnly = false,
+                Secure = false,
             });
             return View();
         }

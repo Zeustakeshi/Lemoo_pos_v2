@@ -25,9 +25,9 @@ namespace Lemoo_pos.Services
         private readonly IInventoryService _inventoryService;
         private readonly IElasticsearchService _elasticsearchService;
 
-        public ProductService (
-            ICloudinaryService cloudinaryService, 
-            AppDbContext db, 
+        public ProductService(
+            ICloudinaryService cloudinaryService,
+            AppDbContext db,
             ISessionService sessionService,
             IInventoryService inventoryService,
             IElasticsearchService elasticsearchService
@@ -91,24 +91,26 @@ namespace Lemoo_pos.Services
             {
                 string imageUrl = await _cloudinaryService.UploadImageAsync(image, "/products", _cloudinaryService.GenerateImageId(product.Id.ToString()));
                 product.Image = imageUrl;
-            }else
+            }
+            else
             {
                 product.Image = "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg";
             }
 
             try
             {
-             _db.Products.Add(product);
+                _db.Products.Add(product);
 
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 await Console.Out.WriteLineAsync(ex.Message);
-                throw; 
+                throw;
             }
-                
+
             if (productData.CategoryId != null)
             {
-                ProductCategory category =  _db.ProductCategories.Single(category => category.Id == productData.CategoryId);
+                ProductCategory category = _db.ProductCategories.Single(category => category.Id == productData.CategoryId);
                 if (category != null)
                 {
                     product.Category = category;
@@ -174,17 +176,17 @@ namespace Lemoo_pos.Services
 
                 foreach (var branch in branches)
                 {
-                   
+
 
                     try
                     {
-                       _inventoryService.CreateInventory(
-                        newProductVariant,
-                        branch,
-                        variant.Quantity,
-                        variant.Quantity,
-                        staff: staff
-                       );
+                        _inventoryService.CreateInventory(
+                         newProductVariant,
+                         branch,
+                         variant.Quantity,
+                         variant.Quantity,
+                         staff: staff
+                        );
                     }
                     catch (Exception ex)
                     {
@@ -200,8 +202,9 @@ namespace Lemoo_pos.Services
                 {
                     ProductAttributeValue value = attributeValues.FirstOrDefault(a => a.Id.Equals(attributeId)).attributeValue;
                     if (value == null) continue;
-                    
-                    _db.ProductVariantAttributes.Add(new() { 
+
+                    _db.ProductVariantAttributes.Add(new()
+                    {
                         Variant = productVariant,
                         AttributeValue = value
                     });
@@ -212,7 +215,7 @@ namespace Lemoo_pos.Services
                 await _elasticsearchService.SaveDocumentById(new ProductSearchDto()
                 {
                     Id = product.Id,
-                    Branches = [..productData.Branches],
+                    Branches = [.. productData.Branches],
                     Name = product.Name,
                     Price = variant.SellingPrice,
                     Quantity = variant.Quantity,
@@ -226,7 +229,7 @@ namespace Lemoo_pos.Services
                 }, newProductVariant.Id.ToString(), "products");
 
             }
-        
+
             _db.SaveChanges();
 
         }
@@ -386,12 +389,12 @@ namespace Lemoo_pos.Services
             foreach (var inventory in variant.Inventories)
             {
                 inventories.Add(new()
-                    {
-                        Id = inventory.Id,
-                        BranchName = inventory.Branch.Name,
-                        Available = inventory.Available ,
-                        Quantity = inventory.Quantity 
-                    }
+                {
+                    Id = inventory.Id,
+                    BranchName = inventory.Branch.Name,
+                    Available = inventory.Available,
+                    Quantity = inventory.Quantity
+                }
                 );
             }
 
@@ -414,9 +417,9 @@ namespace Lemoo_pos.Services
             return response;
         }
 
-        public void DeleteProduct (long productId) 
+        public void DeleteProduct(long productId)
         {
-            Product product = _db.Products.Single(p => p.Id ==  productId);
+            Product product = _db.Products.Single(p => p.Id == productId);
             if (product == null)
             {
                 throw new Exception("Không tìm thấy sản phẩm này");
@@ -451,8 +454,8 @@ namespace Lemoo_pos.Services
             if (image != null)
             {
                 string imageUrl = await _cloudinaryService.UploadImageAsync(
-                    image, 
-                    "/products/variant/", 
+                    image,
+                    "/products/variant/",
                     _cloudinaryService.GenerateImageId(variant.Id.ToString())
                 );
 
@@ -472,11 +475,17 @@ namespace Lemoo_pos.Services
                 updatedProductVariant.SkuCode,
                 updatedProductVariant.Image,
                 updatedProductVariant.AllowNegativeInventory,
-            },  updatedProductVariant.Id.ToString(), "products");
+            }, updatedProductVariant.Id.ToString(), "products");
 
             _db.SaveChanges();
         }
 
+        public long GetProductCount(long storeId)
+        {
+            return _db.Products
+            .Where(p => p.Store.Id == storeId)
+            .Sum(p => p.Variants.Count());
+        }
 
         private ProductVariantResponseViewModel ConvertProductVariantToProductVariantResponse(ProductVariant variant)
         {
@@ -495,6 +504,6 @@ namespace Lemoo_pos.Services
             };
         }
 
-       
+
     }
 }

@@ -3,6 +3,8 @@ importScripts(
     "https://cdnjs.cloudflare.com/ajax/libs/axios/1.7.8/axios.min.js"
 );
 
+let accessToken = undefined;
+
 function openDatabase() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open("LemooDatabase");
@@ -63,7 +65,7 @@ async function deleteOrder(id) {
     });
 }
 
-async function insertSyncOrderLog() { }
+async function insertSyncOrderLog() {}
 
 async function syncOrders() {
     try {
@@ -74,11 +76,24 @@ async function syncOrders() {
             return;
         }
 
+        if (!accessToken) {
+            console.log("[SW] Unauthorized to synchronize.");
+        }
+        console.log({ orders });
         const chunks = chunkArray(orders, 10);
 
         for (const chunk of chunks) {
             try {
-                await axios.post("/api/test/test-1", chunk);
+                const { data } = await axios.post(
+                    "/api/pos/orders/batch",
+                    chunk,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
 
                 for (const order of chunk) {
                     await deleteOrder(order.id);
@@ -89,6 +104,7 @@ async function syncOrders() {
                 );
             } catch (error) {
                 console.error("[SW] Synchronization failed!");
+                throw error;
             }
         }
         console.log("[SW] Completed synchronization of all orders.");
@@ -102,4 +118,26 @@ self.addEventListener("sync", (event) => {
         console.log("[SW] Processing Order synchronization...");
         event.waitUntil(syncOrders());
     }
+});
+
+self.addEventListener("message", (event) => {
+    console.log("[SW] Received message:", event.data);
+
+    if (event.data && event.data.type === "SEND_ACCESS_TOKEN") {
+        accessToken = event.data.message;
+        console.log({ accessToken });
+    }
+});
+
+self.addEventListener("install", (event) => {
+    console.log("[SW] Service Worker: Installed");
+
+    // Automatically activate right after installation
+    event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener("activate", (event) => {
+    console.log("[SW] Service Worker: Activated");
+
+    event.waitUntil(self.clients.claim());
 });

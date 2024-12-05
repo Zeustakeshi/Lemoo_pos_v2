@@ -18,7 +18,9 @@ namespace Lemoo_pos.Services.Interfaces
 
         Task UpdateProductVariant(long productId, long variantId, UpdateProductVariantViewModel model, IFormFile image);
 
-        void DeleteProduct (long productId);
+        void DeleteProduct(long productId);
+
+        long GetProductCount(long storeId);
 
     }
 }

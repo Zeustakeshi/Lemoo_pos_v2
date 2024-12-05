@@ -1,8 +1,10 @@
 ﻿using Lemoo_pos.Models.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lemoo_pos.Controllers
 {
+    [Authorize]
     [Route("api/test")]
     public class TestController : Controller
     {

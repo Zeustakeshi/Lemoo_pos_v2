@@ -4,6 +4,7 @@ using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Formats.Asn1;
 using System.Security;
 
 namespace Lemoo_pos.Services
@@ -135,6 +136,14 @@ namespace Lemoo_pos.Services
                 CreatedAt = order.CreatedAt,
                 UpdatedAt = order.UpdatedAt,
             };
+        }
+
+        public void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId)
+        {
+            foreach (var dto in dtos)
+            {
+                CreateOrder(dto, storeId, accountId);
+            }
         }
     }
 }

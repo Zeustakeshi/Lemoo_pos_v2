@@ -95,5 +95,9 @@ namespace Lemoo_pos.Services
 
         }
 
+        public long GetCustomerCount(long storeId)
+        {
+            return _db.Customers.Where(c => c.StoreId == storeId).Count();
+        }
     }
 }
