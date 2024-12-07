@@ -9,26 +9,28 @@ namespace Lemoo_pos.Controllers
     {
 
         private readonly IStaffService _staffService;
-        public StaffController(IStaffService staffService)
+        private readonly ISessionService _sesstionService;
+        public StaffController(IStaffService staffService, ISessionService sessionService)
         {
+            _sesstionService = sessionService;
             _staffService = staffService;
         }
 
-
         public IActionResult Index()
         {
-            return View(_staffService.GetAllStaff());
+            long storeId = _sesstionService.GetStoreIdSession();
+            return View(_staffService.GetAllStaff(storeId));
         }
 
         [HttpGet("create")]
-        public IActionResult CreateStaff ()
+        public IActionResult CreateStaff()
         {
             return View(_staffService.GetAllStaffStatus());
         }
 
 
         [HttpPost("create")]
-        public IActionResult CreateStaff ([FromBody] CreateStaffViewModel model)
+        public IActionResult CreateStaff([FromBody] CreateStaffViewModel model)
         {
             try
             {
@@ -37,7 +39,9 @@ namespace Lemoo_pos.Controllers
                 _staffService.CreateStaff(model);
                 return Json("Thêm nhân viên thành công");
 
-            }catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 Console.WriteLine(ex.Message);
                 Response.StatusCode = 500;
                 return Json("Tạo nhân viên thất bại");

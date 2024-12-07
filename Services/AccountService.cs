@@ -1,5 +1,5 @@
 ﻿using Lemoo_pos.Data;
-using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
 
@@ -10,14 +10,14 @@ namespace Lemoo_pos.Services
 
         private readonly AppDbContext _db;
 
-        public AccountService (AppDbContext db)
+        public AccountService(AppDbContext db)
         {
             _db = db;
         }
 
         public Account CreateAccount(
-            string email, 
-            string phone, 
+            string email,
+            string phone,
             string name,
             string password,
             Store store,
@@ -50,7 +50,7 @@ namespace Lemoo_pos.Services
             return account;
         }
 
-        public AccountInfoResponseDto GetAccountById (long accountId)
+        public AccountInfoResponseDto GetAccountById(long accountId)
         {
             Account account = _db.Accounts.Single(a => a.Id == accountId) ?? throw new Exception($"Account doesn't exist");
             return new()
@@ -58,7 +58,7 @@ namespace Lemoo_pos.Services
                 Id = accountId,
                 Email = account.Email,
                 Name = account.Name,
-                Avatar= account.Avatar,
+                Avatar = account.Avatar,
                 Phone = account.Phone,
             };
         }

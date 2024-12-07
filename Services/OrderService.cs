@@ -1,6 +1,6 @@
-﻿using Lemoo_pos.Common.Enums;
+﻿using Lemoo_pos.Areas.Api.Dto;
+using Lemoo_pos.Common.Enums;
 using Lemoo_pos.Data;
-using Lemoo_pos.Models.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +20,6 @@ namespace Lemoo_pos.Services
             _elasticsearchService = elasticsearchService;
             _db = db;
         }
-
         public OrderResponseDto CreateOrder(CreateOrderDto dto, long storeId, long accountId)
         {
             Store store = _db.Stores.Single(s => s.Id == storeId) ?? throw new Exception($"Store id = {storeId} not found ");
@@ -137,7 +136,6 @@ namespace Lemoo_pos.Services
                 UpdatedAt = order.UpdatedAt,
             };
         }
-
         public void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId)
         {
             foreach (var dto in dtos)

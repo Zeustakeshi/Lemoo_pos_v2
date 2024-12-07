@@ -1,4 +1,4 @@
-﻿using Lemoo_pos.Models.Dto;
+﻿using Lemoo_pos.Areas.Api.Dto;
 
 namespace Lemoo_pos.Services.Interfaces
 {

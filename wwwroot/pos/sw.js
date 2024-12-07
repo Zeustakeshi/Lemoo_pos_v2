@@ -84,16 +84,12 @@ async function syncOrders() {
 
         for (const chunk of chunks) {
             try {
-                const { data } = await axios.post(
-                    "/api/pos/orders/batch",
-                    chunk,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            "Content-Type": "application/json",
-                        },
-                    }
-                );
+                const { data } = await axios.post("/api/orders/batch", chunk, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        "Content-Type": "application/json",
+                    },
+                });
 
                 for (const order of chunk) {
                     await deleteOrder(order.id);

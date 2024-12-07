@@ -7,37 +7,37 @@ namespace Lemoo_pos.Data
     public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
     {
 
-        public DbSet<Account> Accounts { get; set; }
-        public DbSet<AccountAuthority> AccountAuthorities { get; set; }
-        public DbSet<Authority> Authorities { get; set; } 
-        public DbSet<Permission> Permissions { get; set; }
-        public DbSet<AuthorityPermission> AuthorityPermissions { get; set; } 
-        public DbSet<Store> Stores { get; set; }
-        public DbSet<Branch> Branches { get; set; }
-        public DbSet<Staff> Staffs { get; set; }
-        public DbSet<Product> Products { get; set; }
-        public DbSet<ProductVariantAttribute> ProductVariantAttributes { get; set; }
-        public DbSet<ProductVariant> ProductVariants { get; set; }
-        public DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
-        public DbSet<ProductAttribute> ProductAttributes { get; set; }
-        public DbSet<ProductCategory> ProductCategories { get; set; }
-        public DbSet<Brand> Brands { get; set; }
-        public DbSet<Inventory> Inventories { get; set; }
-        public DbSet<InventoryLog> InventoryLogs { get; set; }
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
+        public required DbSet<Account> Accounts { get; set; }
+        public required DbSet<AccountAuthority> AccountAuthorities { get; set; }
+        public required DbSet<Authority> Authorities { get; set; }
+        public required DbSet<Permission> Permissions { get; set; }
+        public required DbSet<AuthorityPermission> AuthorityPermissions { get; set; }
+        public required DbSet<Store> Stores { get; set; }
+        public required DbSet<Branch> Branches { get; set; }
+        public required DbSet<Staff> Staffs { get; set; }
+        public required DbSet<Product> Products { get; set; }
+        public required DbSet<ProductVariantAttribute> ProductVariantAttributes { get; set; }
+        public required DbSet<ProductVariant> ProductVariants { get; set; }
+        public required DbSet<ProductAttributeValue> ProductAttributeValues { get; set; }
+        public required DbSet<ProductAttribute> ProductAttributes { get; set; }
+        public required DbSet<ProductCategory> ProductCategories { get; set; }
+        public required DbSet<Brand> Brands { get; set; }
+        public required DbSet<Inventory> Inventories { get; set; }
+        public required DbSet<InventoryLog> InventoryLogs { get; set; }
+        public required DbSet<Customer> Customers { get; set; }
+        public required DbSet<Order> Orders { get; set; }
+        public required DbSet<OrderItem> OrderItems { get; set; }
+        public required DbSet<Shift> Shifts { get; set; }
 
 
-        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Permission>()
                 .Property(p => p.Type)
                 .HasConversion(
-                    v => v.ToString(),  
-                    v => (PermissionType)Enum.Parse(typeof(PermissionType), v) 
+                    v => v.ToString(),
+                    v => (PermissionType)Enum.Parse(typeof(PermissionType), v)
                 );
 
 

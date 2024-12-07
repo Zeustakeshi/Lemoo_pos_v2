@@ -5,7 +5,7 @@ namespace Lemoo_pos.Services.Interfaces
 {
     public interface IStaffService
     {
-        List<Staff> GetAllStaff();
+        List<Staff> GetAllStaff(long storeId);
 
         List<string> GetAllStaffStatus();
 

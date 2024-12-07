@@ -1,4 +1,4 @@
-﻿using Lemoo_pos.Models.Dto;
+﻿using Lemoo_pos.Areas.Api.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

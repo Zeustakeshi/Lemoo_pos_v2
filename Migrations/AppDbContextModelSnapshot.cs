@@ -410,6 +410,9 @@ namespace Lemoo_pos.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("ShiftId")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("StaffId")
                         .HasColumnType("bigint");
 
@@ -425,6 +428,8 @@ namespace Lemoo_pos.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("ShiftId");
 
                     b.HasIndex("StaffId");
 
@@ -705,6 +710,50 @@ namespace Lemoo_pos.Migrations
                     b.ToTable("ProductVariantAttributes");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Shift", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("CloseNote")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OpenNote")
+                        .HasColumnType("text");
+
+                    b.Property<long>("StaffId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("StoreId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("StoreId");
+
+                    b.ToTable("Shifts");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.Staff", b =>
                 {
                     b.Property<long>("Id")
@@ -914,6 +963,10 @@ namespace Lemoo_pos.Migrations
                         .WithMany("Orders")
                         .HasForeignKey("CustomerId");
 
+                    b.HasOne("Lemoo_pos.Models.Entities.Shift", "Shift")
+                        .WithMany("Orders")
+                        .HasForeignKey("ShiftId");
+
                     b.HasOne("Lemoo_pos.Models.Entities.Staff", "Staff")
                         .WithMany()
                         .HasForeignKey("StaffId")
@@ -927,6 +980,8 @@ namespace Lemoo_pos.Migrations
                         .IsRequired();
 
                     b.Navigation("Customer");
+
+                    b.Navigation("Shift");
 
                     b.Navigation("Staff");
 
@@ -1025,6 +1080,25 @@ namespace Lemoo_pos.Migrations
                     b.Navigation("Variant");
                 });
 
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Shift", b =>
+                {
+                    b.HasOne("Lemoo_pos.Models.Entities.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Lemoo_pos.Models.Entities.Store", "Store")
+                        .WithMany()
+                        .HasForeignKey("StoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("Store");
+                });
+
             modelBuilder.Entity("Lemoo_pos.Models.Entities.Staff", b =>
                 {
                     b.HasOne("Lemoo_pos.Models.Entities.Account", "Account")
@@ -1074,6 +1148,11 @@ namespace Lemoo_pos.Migrations
                     b.Navigation("AttributeValues");
 
                     b.Navigation("Inventories");
+                });
+
+            modelBuilder.Entity("Lemoo_pos.Models.Entities.Shift", b =>
+                {
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

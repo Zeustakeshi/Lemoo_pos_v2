@@ -207,8 +207,8 @@ namespace Lemoo_pos.Services
             _httpContext.Session.Clear();
         }
 
-        
-        public async Task RecoverPassword (RecoverPasswordViewModel model)
+
+        public async Task RecoverPassword(RecoverPasswordViewModel model)
         {
             Account account = _db.Accounts.SingleOrDefault(a => a.Email.Equals(model.Email) && a.IsActive) ?? throw new Exception("Email không tồn tại trên hệ thống");
 
@@ -217,7 +217,7 @@ namespace Lemoo_pos.Services
             await _mailService.SendResetPasswordEmail(account.Name, account.Email, BASE_URL + "/auth/reset-password?token=" + resetToken);
         }
 
-        public string GetnerateAuthorizationToken (long accountId, long storeId)
+        public string GetnerateAuthorizationToken(long accountId, long storeId)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SERCRET") ?? "hello_world"));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -298,22 +298,12 @@ namespace Lemoo_pos.Services
         }
 
 
-
-        public Account ResetPassword (ResetPasswordViewModel model, string token)
+        public Account ResetPassword(ResetPasswordViewModel model, string token)
         {
-
-      
 
             var claimsPrincipal = ValidateJwtToken(token) ?? throw new Exception("Token không hợp lệ");
 
-
-            var accountIdString = claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "accountId")?.Value;
-
-            if (accountIdString == null)
-            {
-                 throw new Exception("Token không hợp lệ");
-            }
-
+            var accountIdString = (claimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "accountId")?.Value) ?? throw new Exception("Token không hợp lệ");
             long accountId = Convert.ToInt64(accountIdString);
 
             Account account = _db.Accounts.Single(account => account.Id == accountId) ?? throw new Exception("Token không hợp lệ");
@@ -377,6 +367,6 @@ namespace Lemoo_pos.Services
             _httpContext.Session.Remove("name");
         }
 
-      
+
     }
 }

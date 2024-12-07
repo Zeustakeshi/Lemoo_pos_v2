@@ -1,5 +1,5 @@
 ﻿using Lemoo_pos.Data;
-using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
@@ -15,10 +15,11 @@ namespace Lemoo_pos.Services
         private readonly ISessionService _sessionService;
         private readonly IElasticsearchService _elasticsearchService;
 
-        public InventoryService(AppDbContext db, ISessionService sessionService, IElasticsearchService elasticsearchService) { 
-        
+        public InventoryService(AppDbContext db, ISessionService sessionService, IElasticsearchService elasticsearchService)
+        {
+
             _db = db;
-           _sessionService = sessionService;
+            _sessionService = sessionService;
             _elasticsearchService = elasticsearchService;
         }
 
@@ -35,9 +36,9 @@ namespace Lemoo_pos.Services
                 Quantity = quantity,
             };
 
-          
 
-           
+
+
             var newInventory = _db.Inventories.Add(inventory).Entity;
 
             InventoryLog log = new()
@@ -121,7 +122,7 @@ namespace Lemoo_pos.Services
 
             inventory.Quantity = model.Quantity;
             inventory.Available = model.Available;
-            
+
 
             _db.Inventories.Update(inventory);
 
@@ -137,7 +138,7 @@ namespace Lemoo_pos.Services
         }
 
 
-        private string GetInventoryLogAction (string reason)
+        private string GetInventoryLogAction(string reason)
         {
             string prefix = "cập nhật tồn kho do ";
             return reason switch

@@ -37,10 +37,8 @@ namespace Lemoo_pos.Services
             _authService = authService;
         }
 
-        public List<Staff> GetAllStaff()
+        public List<Staff> GetAllStaff(long storeId)
         {
-            long storeId = _sessionService.GetStoreIdSession();
-
             List<Staff> staffs = [.. _db.Staffs
                 .Where(s => s.Branch.Store.Id == storeId)
                 .Include(s => s.Branch)

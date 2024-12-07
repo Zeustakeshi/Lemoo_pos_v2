@@ -1,18 +1,11 @@
 ﻿using CloudinaryDotNet;
 using Lemoo_pos.Data;
-using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq.Expressions;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
-using static System.Net.Mime.MediaTypeNames;
-using Nest;
-using System.Text.RegularExpressions;
+
 using Lemoo_pos.Helper;
 
 namespace Lemoo_pos.Services

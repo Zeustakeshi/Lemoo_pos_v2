@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Nest;
+using Lemoo_pos.Areas.Api.Services.Interfaces;
+using Lemoo_pos.Areas.Api.Services;
+using Lemoo_pos.Areas.Api.Filters;
 
 
 DotNetEnv.Env.Load();
@@ -96,8 +99,14 @@ builder.Services.AddSession(options =>
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All); 
+        options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
     });
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
+
 
 
 builder.Services.AddSingleton<IElasticClient>(sp =>
@@ -106,7 +115,7 @@ builder.Services.AddSingleton<IElasticClient>(sp =>
     .ApiKeyAuthentication(
         apiKey: Environment.GetEnvironmentVariable("ELASTICSEARCH_API_KEY"),
         id: Environment.GetEnvironmentVariable("ELASTICSEACRCH_CLIENT_ID")
-    ).DefaultIndex("products"); 
+    ).DefaultIndex("products");
 
     var client = new ElasticClient(settings);
     return client;
@@ -132,7 +141,18 @@ builder.Services.AddTransient<IElasticsearchService, ElasticsearchService>();
 builder.Services.AddTransient<ISearchService, SearchService>();
 builder.Services.AddTransient<IOrderService, OrderService>();
 builder.Services.AddTransient<ICustomerService, CustomerService>();
+// API
+builder.Services.AddTransient<IAccountServiceApi, AccountServiceApi>();
+builder.Services.AddTransient<IProductServiceApi, ProductServiceApi>();
+builder.Services.AddTransient<IStaffServiceApi, StaffServiceApi>();
+builder.Services.AddTransient<ICustomerServiceApi, CustomerServiceApi>();
+builder.Services.AddTransient<IShiftServiceApi, ShiftServiceApi>();
+builder.Services.AddTransient<IOrderServiceApi, OrderServiceApi>();
+builder.Services.AddTransient<IBranchServiceApi, BranchServiceApi>();
+builder.Services.AddTransient<IProductServiceApi, ProductServiceApi>();
+builder.Services.AddTransient<ISearchServiceApi, SearchServiceApi>();
 
+// HELPER
 builder.Services.AddSingleton<PasswordHelper>();
 
 
@@ -144,9 +164,9 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-	app.UseExceptionHandler("/Home/Error");
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-	app.UseHsts();
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
 
 
@@ -185,7 +205,11 @@ app.Use(async (context, next) =>
 app.UseAuthorization();
 
 app.MapControllerRoute(
-	name: "default",
-	pattern: "{controller=Home}/{action=Index}/{id?}");
+    name: "areas",
+    pattern: "{area:exists}/{controller=PosApi}/{action=Index}/{id?}");
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();

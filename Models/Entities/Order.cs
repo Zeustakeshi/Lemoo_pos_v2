@@ -15,5 +15,7 @@ namespace Lemoo_pos.Models.Entities
         public required PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CASH;
         public required long Change { get; set; } = 0;
         public string? Description { get; set; }
+        public Shift? Shift { get; set; }
+        public long? ShiftId { get; set; }
     }
 }

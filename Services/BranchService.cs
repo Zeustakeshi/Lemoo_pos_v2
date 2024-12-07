@@ -1,5 +1,5 @@
 ﻿using Lemoo_pos.Data;
-using Lemoo_pos.Models.Dto;
+using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
@@ -11,7 +11,7 @@ namespace Lemoo_pos.Services
         private readonly AppDbContext _db;
         private readonly ISessionService _sessionService;
 
-        public BranchService(AppDbContext db, ISessionService sessionService) 
+        public BranchService(AppDbContext db, ISessionService sessionService)
         {
             _db = db;
             _sessionService = sessionService;
@@ -44,10 +44,10 @@ namespace Lemoo_pos.Services
 
             Store store = _sessionService.GetStoreSession();
 
-            Branch branch = new ()
+            Branch branch = new()
             {
-                Name= model.Name,
-                Email= model.Email,
+                Name = model.Name,
+                Email = model.Email,
                 Phone = model.Phone,
                 Store = store,
                 StoreId = store.Id,
@@ -74,7 +74,7 @@ namespace Lemoo_pos.Services
             return [.. _db.Branches.Where(branch => branch.StoreId == storeId)];
         }
 
-        public List<BranchResponseDto> GetAllBranchByStoreId (long storeId)
+        public List<BranchResponseDto> GetAllBranchByStoreId(long storeId)
         {
             List<Branch> branches = [.. _db.Branches.Where(branch => branch.StoreId == storeId)];
 
@@ -84,20 +84,20 @@ namespace Lemoo_pos.Services
             {
                 branchResponseDtos.Add(new()
                 {
-                   Id = branch.Id,
-                   Name = branch.Name,
-                   Address = branch.Province != null ?  $"{branch.Ward}, {branch.District}, {branch.Province}" : null
+                    Id = branch.Id,
+                    Name = branch.Name,
+                    Address = branch.Province != null ? $"{branch.Ward}, {branch.District}, {branch.Province}" : null
                 });
             }
             return branchResponseDtos;
         }
 
-        public void UpdateBranch (long branchId, SaveBranchViewModel model)
+        public void UpdateBranch(long branchId, SaveBranchViewModel model)
         {
             long storeId = _sessionService.GetStoreIdSession();
             Branch branch = _db.Branches
-                .Single(branch =>  
-                branch.Id.Equals(branchId) &&  
+                .Single(branch =>
+                branch.Id.Equals(branchId) &&
                 branch.StoreId.Equals(storeId)
                 ) ?? throw new Exception("Chi nhánh không tồn tại");
 
