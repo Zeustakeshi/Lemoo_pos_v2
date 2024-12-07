@@ -1,7 +1,9 @@
-﻿using Lemoo_pos.Areas.Api.Dto;
+﻿using Elasticsearch.Net;
+using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Common.Enums;
 using Lemoo_pos.Data;
 using Lemoo_pos.Models.Entities;
+using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Formats.Asn1;
@@ -13,135 +15,77 @@ namespace Lemoo_pos.Services
     {
         private readonly AppDbContext _db;
         private readonly IElasticsearchService _elasticsearchService;
+        private readonly ISessionService _sessionService;
 
-
-        public OrderService(AppDbContext db, IElasticsearchService elasticsearchService)
+        public OrderService(AppDbContext db, IElasticsearchService elasticsearchService, ISessionService sessionService)
         {
             _elasticsearchService = elasticsearchService;
             _db = db;
+            _sessionService = sessionService;
         }
-        public OrderResponseDto CreateOrder(CreateOrderDto dto, long storeId, long accountId)
+
+
+        public List<PaymentMethodAnaliticsViewModel> GetPaymentMethodAnalytics()
         {
-            Store store = _db.Stores.Single(s => s.Id == storeId) ?? throw new Exception($"Store id = {storeId} not found ");
+            long storeId = _sessionService.GetStoreIdSession();
 
-            Staff staff = _db.Staffs
-                .Include(s => s.Account)
-                .Single(s => s.Account.Id == accountId) ?? throw new Exception($"Staff with accountId= {accountId} not found ");
+            var orderGroups = _db.Orders
+                    .Where(order => order.StoreId == storeId)
+                    .GroupBy(order => order.PaymentMethod);
 
-            PaymentMethod paymentMethod;
+            List<PaymentMethodAnaliticsViewModel> responses = [];
 
-
-            if (Enum.TryParse(dto.PaymentMethod, out PaymentMethod method))
+            foreach (var group in orderGroups)
             {
-                paymentMethod = method;
-            }
-            else
-            {
-                string errorMessage = $"Không thể ánh xạ giá trị '{dto.PaymentMethod}' thành enum.";
-                Console.WriteLine(errorMessage);
-                throw new Exception(errorMessage);
-            }
-
-            Order order = new()
-            {
-                Staff = staff,
-                StaffId = staff.Id,
-                Store = store,
-                StoreId = storeId,
-                Change = dto.Change,
-                PaymentMethod = paymentMethod,
-                Total = dto.Total,
-                Description = dto.Description
-            };
-
-            if (dto.CustomerId != null)
-            {
-                Customer customer = _db.Customers.Single(c => c.Id == dto.CustomerId) ?? throw new Exception("Store doesn't exist");
-                order.Customer = customer;
-            }
-
-            Order newOrder = _db.Orders.Add(order).Entity;
-
-            List<OrderItem> orderItems = [];
-
-            foreach (var item in dto.Items)
-            {
-                OrderItem orderItem = new()
+                responses.Add(new()
                 {
-                    Order = newOrder,
-                    OrderId = newOrder.Id,
-                    Quantity = item.Quantity,
-                    Total = item.Total,
-                    Type = item.Type,
-                    ServiceName = item.ServiceName
-                };
-
-                if (item.ProductId == null)
-                {
-                    orderItems.Add(orderItem);
-                    continue;
-                }
-
-                ProductVariant product = _db.ProductVariants
-                    .Include(p => p.Inventories)
-                    .Single(p => p.Id == item.ProductId) ??
-                    throw new Exception($"Product with {item.ProductId} doesn't exist");
-
-                orderItem.ProductVariant = product;
-                orderItem.ProductVariantId = product.Id;
-                orderItems.Add(orderItem);
-
-
-                Inventory inventory = _db.Inventories
-                    .Include(inventory => inventory.Branch)
-                    .FirstOrDefault(inventory => inventory.Branch.Id == dto.BranchId && inventory.ProductVariantId == product.Id) ??
-                    throw new Exception("Inventory not found");
-
-                if (!product.AllowNegativeInventory && inventory.Available < item.Quantity && inventory.Quantity < item.Quantity)
-                {
-                    throw new Exception("This product not allow save negative inventory");
-                }
-
-                inventory.Available -= item.Quantity;
-                inventory.Quantity -= item.Quantity;
-
-                _db.Inventories.Update(inventory);
-                _elasticsearchService.SaveDocumentById(new { Quantity = inventory.Available }, product.Id.ToString(), "products");
-
-            }
-
-            _db.OrderItems.AddRange(orderItems);
-
-            _db.SaveChanges();
-
-            List<OrderItemDto> orderItemResponse = [];
-
-            foreach (var item in orderItems)
-            {
-                orderItemResponse.Add(new()
-                {
-                    ProductId = item.ProductVariantId,
-                    Quantity = item.Quantity,
-                    Total = item.Total,
+                    PaymentMethod = group.Key.GetStringValue(),
+                    TotalOrder = group.Count()
                 });
             }
 
-            return new()
-            {
-                Id = order.Id,
-                CustomerId = order.CustomerId,
-                Items = orderItemResponse,
-                PaymentMethod = order.PaymentMethod.ToString(),
-                CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt,
-            };
+            return responses;
         }
-        public void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId)
+
+
+        public List<SalesOverviewViewModel> GetSalesOverview()
         {
-            foreach (var dto in dtos)
+            var now = DateTime.UtcNow.Date; // Chỉ lấy phần ngày
+            var sevenDaysAgo = now.AddDays(-7);
+
+            // Tạo danh sách các ngày từ sevenDaysAgo đến now
+            var allDates = Enumerable.Range(0, 8) // 8 ngày: từ ngày 0 đến ngày 7
+                .Select(offset => sevenDaysAgo.AddDays(offset))
+                .ToList();
+
+            // Truy vấn doanh thu từ cơ sở dữ liệu
+            var salesData = _db.Orders
+                .Where(order => order.CreatedAt.Date >= sevenDaysAgo && order.CreatedAt.Date <= now)
+                .GroupBy(order => order.CreatedAt.Date)
+                .Select(group => new SalesOverviewViewModel()
+                {
+                    Date = group.Key,
+                    TotalRevenue = group.Sum(order => order.Total), // Tổng doanh thu
+                })
+                .ToList(); // Chuyển thành danh sách
+
+            // Hợp nhất danh sách đầy đủ với kết quả truy vấn
+            var result = allDates.Select(date =>
             {
-                CreateOrder(dto, storeId, accountId);
-            }
+                // Tìm doanh thu theo ngày, nếu không có thì mặc định là 0
+                var existingData = salesData.FirstOrDefault(stat => stat.Date == date);
+                return existingData ?? new SalesOverviewViewModel
+                {
+                    Date = date,
+                    TotalRevenue = 0
+                };
+            })
+            .OrderBy(stat => stat.Date) // Sắp xếp theo ngày
+            .ToList();
+
+            return result;
         }
     }
+
+
 }

@@ -1,4 +1,5 @@
 ﻿using Lemoo_pos.Models.Entities;
+using Lemoo_pos.Models.ViewModels;
 
 namespace Lemoo_pos.Services.Interfaces
 {
@@ -6,6 +7,6 @@ namespace Lemoo_pos.Services.Interfaces
     {
         Store CreateNewStore(string name);
 
-
+        StoreOverviewViewModel GetStoreOverview();
     }
 }

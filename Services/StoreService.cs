@@ -1,5 +1,6 @@
 ﻿using Lemoo_pos.Data;
 using Lemoo_pos.Models.Entities;
+using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
 
 namespace Lemoo_pos.Services
@@ -8,19 +9,32 @@ namespace Lemoo_pos.Services
     {
 
         private readonly AppDbContext _db;
-        private readonly HttpContext _httpContext;
+        private readonly ISessionService _sessionService;
 
-        public StoreService(AppDbContext db, IHttpContextAccessor httpContextAccessor)
+        public StoreService(AppDbContext db, IHttpContextAccessor httpContextAccessor, ISessionService sessionService)
         {
             _db = db;
-            _httpContext = httpContextAccessor.HttpContext;
+            _sessionService = sessionService;
         }
 
         public Store CreateNewStore(string name)
         {
-            return  _db.Stores.Add(new() { Name = name }).Entity;
+            return _db.Stores.Add(new() { Name = name }).Entity;
         }
 
+        public StoreOverviewViewModel GetStoreOverview()
+        {
+            long storeId = _sessionService.GetStoreIdSession();
+
+            List<Order> orders = [.. _db.Orders.Where(o => o.StoreId == storeId)];
+
+            return new()
+            {
+                TotalProducts = _db.Products.Where(p => p.Store.Id == storeId).Count(),
+                TotalSales = orders.Count,
+                Revenue = orders.Aggregate(0L, (acc, curr) => acc + curr.Total)
+            };
+        }
 
     }
 }

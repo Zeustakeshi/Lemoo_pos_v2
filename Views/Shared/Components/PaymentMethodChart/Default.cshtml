@@ -1,0 +1,74 @@
+@model List<Lemoo_pos.Models.ViewModels.PaymentMethodAnaliticsViewModel>
+    <div class="card col-lg-4">
+        <div class="card-header d-flex justify-content-between">
+            <div class="header-title">
+                <h4 class="card-title">Phương thức thanh toán</h4>
+            </div>
+        </div>
+        <div class="card-body">
+            <div
+                id="payment-method-chart"
+                style="height: 300px; position: relative"
+            ></div>
+        </div>
+    </div>
+
+    <script
+        src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"
+    ></script>
+    <script src="//cdn.amcharts.com/lib/4/core.js"></script>
+    <script src="//cdn.amcharts.com/lib/4/charts.js"></script>
+    <script src="//cdn.amcharts.com/lib/4/maps.js"></script>
+
+    <script>
+        if (jQuery("#payment-method-chart").length) {
+            am4core.ready(function () {
+                am4core.useTheme(am4themes_animated);
+
+                var chart = am4core.create(
+                    "payment-method-chart",
+                    am4charts.PieChart3D
+                );
+                chart.hiddenState.properties.opacity = 0; // this creates initial fade-in
+
+                chart.legend = new am4charts.Legend();
+
+                chart.data = [
+                    @foreach (var data in Model) {
+                          @: { paymentMethod: "@data.PaymentMethod", totalOrder: @data.TotalOrder },
+                    }
+                ].map(data=> {
+                    let paymentMethod = "Không xác định"
+                    if (data.paymentMethod == "CASH") paymentMethod = "Tiền mặt"
+                    else if (data.paymentMethod == "BANK_TRANSFER") paymentMethod = "Chuyển khoản"
+                    else if (data.paymentMethod == "CARD") paymentMethod = "thanh toán bằng thẻ"
+                    return {
+                        ...data,
+                        paymentMethod
+                    }
+                });
+
+                var series = chart.series.push(new am4charts.PieSeries3D());
+                series.colors.list = [
+                    am4core.color("#2563eb"),
+                    am4core.color("#059669"),
+                    am4core.color("#f59e0b"),
+                ];
+                series.dataFields.value = "totalOrder";
+                series.dataFields.category = "paymentMethod";
+
+                const body = document.querySelector("body");
+                if (body.classList.contains("dark")) {
+                    amChartUpdate(chart, {
+                        dark: true,
+                    });
+                }
+                document.addEventListener("ChangeColorMode", function (e) {
+                    amChartUpdate(chart, e.detail);
+                });
+            }); // end am4core.ready()
+        }
+    </script>
+</Lemoo_pos.Models.ViewModels.PaymentMethodAnaliticsViewModel>

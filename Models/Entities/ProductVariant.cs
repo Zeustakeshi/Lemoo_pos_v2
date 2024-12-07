@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Lemoo_pos.Common.Enums;
 
 namespace Lemoo_pos.Models.Entities
 {
@@ -25,5 +26,6 @@ namespace Lemoo_pos.Models.Entities
         public List<Inventory> Inventories { get; set; } = [];
 
         public List<ProductVariantAttribute> AttributeValues { get; set; } = [];
+        public SaveStatus SaveStatus { get; set; }
     }
 }

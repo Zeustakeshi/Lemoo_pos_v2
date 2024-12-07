@@ -1,10 +1,11 @@
 ﻿using Lemoo_pos.Areas.Api.Dto;
+using Lemoo_pos.Models.ViewModels;
 
 namespace Lemoo_pos.Services.Interfaces
 {
     public interface IOrderService
     {
-        OrderResponseDto CreateOrder(CreateOrderDto dto, long storeId, long accountId);
-        void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId);
+        List<PaymentMethodAnaliticsViewModel> GetPaymentMethodAnalytics();
+        List<SalesOverviewViewModel> GetSalesOverview();
     }
 }

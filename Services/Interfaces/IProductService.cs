@@ -7,8 +7,6 @@ namespace Lemoo_pos.Services.Interfaces
     {
         Task CreateProduct(CreateProductViewModel model, IFormFile image);
 
-        Task<ProductResponseDto> CreateProduct(CreateProductDto dto, long accountId, long storeId);
-
         List<ProductResponseViewModel> GetAllProduct();
 
         List<ProductVariantResponseViewModel> GetAllVariants(long productId);
@@ -19,7 +17,7 @@ namespace Lemoo_pos.Services.Interfaces
 
         void DeleteProduct(long productId);
 
-        long GetProductCount(long storeId);
+        List<TopProductViewModel> GetTopProducts(int limit);
 
     }
 }
