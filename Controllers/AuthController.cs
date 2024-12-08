@@ -170,7 +170,7 @@ namespace Lemoo_pos.Controllers
         }
 
         [HttpPost("verify-otp")]
-        public IActionResult VerifyOtpHandler(string plainOtp)
+        public async Task<IActionResult> VerifyOtpHandler(string plainOtp)
         {
             string code = HttpContext.Session.GetString("code");
             string typeString = HttpContext.Session.GetString("type");
@@ -183,8 +183,7 @@ namespace Lemoo_pos.Controllers
             {
                 if (type.Equals(OtpType.ACCOUNT_CREATION))
                 {
-                    Account account = _authService.VerifyAccountCreationOtp(code, plainOtp);
-
+                    Account account = await _authService.VerifyAccountCreationOtp(code, plainOtp);
                 }
 
                 HttpContext.Session.Remove("code");

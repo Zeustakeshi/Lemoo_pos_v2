@@ -10,6 +10,8 @@ namespace Lemoo_pos.Services.Interfaces
 
         Branch CreateDefaultBranch(Store store, string email, string phone);
 
+        Task<long> CreateBranchAsync(long storeId, string name, string email, string phone, bool isDefaultBranch);
+
         void UpdateBranch(long branchId, SaveBranchViewModel model);
 
         Branch CreateBranch(SaveBranchViewModel model);

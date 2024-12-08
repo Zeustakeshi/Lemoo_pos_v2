@@ -9,7 +9,8 @@ namespace Lemoo_pos.Controllers
     {
 
         private readonly IAuthorityService _authorityService;
-        public RoleController(IAuthorityService authorityService) {
+        public RoleController(IAuthorityService authorityService)
+        {
             _authorityService = authorityService;
         }
 
@@ -26,13 +27,15 @@ namespace Lemoo_pos.Controllers
         }
 
         [HttpPost("create")]
-        public IActionResult SaveRole([FromBody] CreateRoleViewModel model)
+        public async Task<IActionResult> SaveRole([FromBody] CreateRoleViewModel model)
         {
             try
             {
-                _authorityService.CreateRole(model);
+                await _authorityService.CreateRole(model);
                 return Json("Tạo vai trò thành công");
-            }catch (Exception ex) { 
+            }
+            catch (Exception ex)
+            {
                 Response.StatusCode = 500;
                 return Json(ex.Message);
 

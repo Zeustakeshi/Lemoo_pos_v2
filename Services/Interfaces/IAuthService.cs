@@ -11,7 +11,7 @@ namespace Lemoo_pos.Services.Interfaces
 
         Task<string> ResendAccountCreationOtp(string code);
 
-        Account VerifyAccountCreationOtp(string code, string plainOtp);
+        Task<Account> VerifyAccountCreationOtp(string code, string plainOtp);
 
         Account Login(LoginViewModel model);
 

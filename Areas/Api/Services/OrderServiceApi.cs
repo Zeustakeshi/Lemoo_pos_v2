@@ -138,6 +138,16 @@ namespace Lemoo_pos.Areas.Api.Services
             }
         }
 
+        public async Task UpdateOrderCustomer(long orderId, long customerId)
+        {
+            Order order = _db.Orders.FirstOrDefault(o => o.Id == orderId) ?? throw new Exception($"Order {orderId} not found");
+            Customer customer = _db.Customers.FirstOrDefault(customer => customer.Id == customerId) ?? throw new Exception($"Customer {customerId} not found");
+            order.Customer = customer;
+            order.CustomerId = customer.Id;
+            _db.Orders.Update(order);
+            await _db.SaveChangesAsync();
+        }
+
         private async Task UpdateOrderShiftAsync(Order order, long staffId)
         {
             Shift shift = _db.Shifts.FirstOrDefault(shift => shift.StaffId == staffId && shift.Status.Equals(ShiftStatus.OPENING)) ??

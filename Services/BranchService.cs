@@ -17,6 +17,31 @@ namespace Lemoo_pos.Services
             _sessionService = sessionService;
         }
 
+
+        public async Task<long> CreateBranchAsync(long storeId, string name, string email, string phone, bool isDefaultBranch)
+        {
+            Store store = _db.Stores.FirstOrDefault(s => s.Id == storeId) ?? throw new Exception($"Store {storeId} not found");
+
+            bool isExistedBranch = _db.Branches.Any(b => b.Name.Equals(name) && b.StoreId.Equals(storeId));
+            if (isExistedBranch)
+            {
+                throw new Exception("Tên chi nhánh đã tồn tại");
+            }
+
+            Branch branch = new()
+            {
+                Name = name,
+                Email = email,
+                Phone = phone,
+                Store = store,
+                StoreId = store.Id,
+                IsDefaultBranch = false,
+            };
+            Branch newBranch = _db.Branches.Add(branch).Entity;
+            await _db.SaveChangesAsync();
+            return newBranch.Id;
+        }
+
         public Branch CreateDefaultBranch(Store store, string email, string phone)
         {
             Branch defaultBranch = new()
@@ -65,7 +90,6 @@ namespace Lemoo_pos.Services
             _db.SaveChanges();
 
             return newBranch;
-
         }
 
         public List<Branch> GetAllBranch()

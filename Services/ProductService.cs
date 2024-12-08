@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Lemoo_pos.Helper;
 using Nest;
 using Lemoo_pos.Common.Enums;
+using MassTransit;
+using Lemoo_pos.Messages;
 
 namespace Lemoo_pos.Services
 {
@@ -19,13 +21,15 @@ namespace Lemoo_pos.Services
         private readonly ISessionService _sessionService;
         private readonly IInventoryService _inventoryService;
         private readonly IElasticsearchService _elasticsearchService;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public ProductService(
             ICloudinaryService cloudinaryService,
             AppDbContext db,
             ISessionService sessionService,
             IInventoryService inventoryService,
-            IElasticsearchService elasticsearchService
+            IElasticsearchService elasticsearchService,
+             IPublishEndpoint publishEndpoint
         )
         {
             _cloudinaryService = cloudinaryService;
@@ -33,6 +37,7 @@ namespace Lemoo_pos.Services
             _inventoryService = inventoryService;
             _sessionService = sessionService;
             _elasticsearchService = elasticsearchService;
+            _publishEndpoint = publishEndpoint;
         }
 
 
@@ -70,10 +75,11 @@ namespace Lemoo_pos.Services
 
         public async Task CreateProduct(CreateProductViewModel productData, IFormFile image)
         {
-
+            // Get the store and staff information from the session
             Store store = _sessionService.GetStoreSession();
             Staff staff = _sessionService.GetStaffSession();
 
+            // Create a new product entity based on the provided data
             Product product = new()
             {
                 Name = productData.Name,
@@ -82,27 +88,32 @@ namespace Lemoo_pos.Services
                 Store = store,
             };
 
+            // Check if there is an image provided for the product
             if (image != null)
             {
+                // Upload the image to Cloudinary and get the image URL
                 string imageUrl = await _cloudinaryService.UploadImageAsync(image, "/products", _cloudinaryService.GenerateImageId(product.Id.ToString()));
                 product.Image = imageUrl;
             }
             else
             {
+                // Use a default image if no image is provided
                 product.Image = "http://res.cloudinary.com/dymmvrufy/image/upload/v1732958992/lemoo_pos/products/cgvy4owbou09tb6okwvu.svg";
             }
 
             try
             {
+                // Add the product to the database
                 _db.Products.Add(product);
-
             }
             catch (Exception ex)
             {
+                // Log any errors during the product addition
                 await Console.Out.WriteLineAsync(ex.Message);
                 throw;
             }
 
+            // Set the category of the product if provided
             if (productData.CategoryId != null)
             {
                 ProductCategory category = _db.ProductCategories.Single(category => category.Id == productData.CategoryId);
@@ -113,29 +124,24 @@ namespace Lemoo_pos.Services
                 }
             }
 
-            if (productData.BrandId != null)
-            {
-                Brand brand = _db.Brands.Single(brand => brand.Id == productData.BrandId);
-                if (brand != null)
-                {
-                    product.Brand = brand;
-                    product.BrandId = brand.Id;
-                }
-            }
 
+
+            // Create a list of attribute values to be associated with the product
             var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
 
-
+            // Process the attributes provided for the product
             foreach (var attribute in productData.Attributes)
             {
+                // Create a new product attribute
                 var productAttribute = new ProductAttribute()
                 {
                     Name = attribute.Name
                 };
 
+                // Add the attribute to the database
                 _db.ProductAttributes.Add(productAttribute);
 
-
+                // Process each attribute value
                 foreach (var value in attribute.Values)
                 {
                     var productAttributeValue = new ProductAttributeValue()
@@ -144,16 +150,21 @@ namespace Lemoo_pos.Services
                         Value = value.Name,
                     };
 
+                    // Add the attribute value to the database
                     _db.ProductAttributeValues.Add(productAttributeValue);
 
+                    // Save the attribute value for later association with product variants
                     attributeValues.Add((value.Id, attributeValue: productAttributeValue));
                 }
             }
 
-            List<Branch> branches = [.. _db.Branches.Where(branch => productData.Branches.Contains(branch.Id))];
+            // Fetch the branches for the product based on the provided branch IDs
+            List<Branch> branches = _db.Branches.Where(branch => productData.Branches.Contains(branch.Id)).ToList();
 
+            // Process each product variant
             foreach (var variant in productData.Variants)
             {
+                // Create a new product variant entity
                 ProductVariant productVariant = new()
                 {
                     BarCode = variant.BarCode,
@@ -167,50 +178,66 @@ namespace Lemoo_pos.Services
                     AllowNegativeInventory = productData.AllowNegativeInventory
                 };
 
+                // Add the product variant to the database and get the added variant
                 var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
 
+                _db.SaveChanges();
+                // Process the inventory for each branch in parallel
+                // This can be done in parallel to improve performance if there are multiple branches
                 foreach (var branch in branches)
                 {
-
-
                     try
                     {
-                        _inventoryService.CreateInventory(
-                         newProductVariant,
-                         branch,
-                         variant.Quantity,
-                         variant.Quantity,
-                         staff: staff
-                        );
+                        // Create inventory for the product variant in the branch
+                        // _inventoryService.CreateInventory(
+                        //     newProductVariant,
+                        //     branch,
+                        //     variant.Quantity,
+                        //     variant.Quantity,
+                        //     staff: staff
+                        // );
+                        await _publishEndpoint.Publish(new InitInventoryMessage()
+                        {
+                            Available = variant.Quantity,
+                            Quantity = variant.Quantity,
+                            BranchId = branch.Id,
+                            ProductVariantId = newProductVariant.Id,
+                            StaffId = staff.Id
+                        });
                     }
                     catch (Exception ex)
                     {
+                        // Log any errors during inventory creation
                         await Console.Out.WriteLineAsync(ex.Message);
                         throw new Exception("Lưu kho thất bại");
                     }
-
                 }
 
+                // Process the variant's attribute values and associate them with the variant
                 List<string> variantNames = [];
 
                 foreach (var attributeId in variant.AttributeValues)
                 {
+                    // Find the product attribute value associated with the variant's attribute
                     ProductAttributeValue value = attributeValues.FirstOrDefault(a => a.Id.Equals(attributeId)).attributeValue;
                     if (value == null) continue;
 
+                    // Add the attribute value to the product variant
                     _db.ProductVariantAttributes.Add(new()
                     {
                         Variant = productVariant,
                         AttributeValue = value
                     });
 
+                    // Add the attribute value to the list of variant names
                     variantNames.Add(value.Value);
                 }
 
-                await _elasticsearchService.SaveDocumentById(new ProductSearchDto()
+                // Save the product variant information to Elasticsearch
+                await _publishEndpoint.Publish(new SaveSearchProductMessage()
                 {
                     Id = product.Id,
-                    Branches = [.. productData.Branches],
+                    Branches = productData.Branches,
                     Name = product.Name,
                     Price = variant.SellingPrice,
                     Quantity = variant.Quantity,
@@ -221,11 +248,24 @@ namespace Lemoo_pos.Services
                     VariantId = newProductVariant.Id,
                     AllowNegativeInventory = productData.AllowNegativeInventory,
                     Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + String.Join("-", variantNames)),
-                }, newProductVariant.Id.ToString(), "products");
-
+                });
             }
 
+            // Commit the changes to the database
             _db.SaveChanges();
+
+
+            // Set the brand of the product if provided
+            if (productData.BrandId != null)
+            {
+                await _publishEndpoint.Publish(new UpdateProductBrandMessage()
+                {
+                    ProductId = product.Id,
+                    BrandId = productData.BrandId ?? throw new Exception("Invalid product brand")
+                });
+            }
+
+
 
         }
 

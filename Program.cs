@@ -2,7 +2,6 @@
 using Lemoo_pos.Services.Interfaces;
 using Lemoo_pos.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using Lemoo_pos.Helper;
 using CloudinaryDotNet;
@@ -13,6 +12,8 @@ using Nest;
 using Lemoo_pos.Areas.Api.Services.Interfaces;
 using Lemoo_pos.Areas.Api.Services;
 using Lemoo_pos.Areas.Api.Filters;
+using MassTransit;
+using Lemoo_pos.Consumers;
 
 
 DotNetEnv.Env.Load();
@@ -73,7 +74,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
   );
 
 
-
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     return ConnectionMultiplexer.Connect(redisConnectionString);
@@ -93,6 +93,78 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
     // Liên kết session với Redis
     options.IOTimeout = TimeSpan.FromSeconds(1);
+});
+
+// config rabbitmq
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(
+            Environment.GetEnvironmentVariable("RABBITMQ_HOST"),
+             Environment.GetEnvironmentVariable("RABBITMQ_VHOST"),
+               h =>
+               {
+                   h.Username(Environment.GetEnvironmentVariable("RABBITMQ_USER"));
+                   h.Password(Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD"));
+               });
+        cfg.ReceiveEndpoint("new_authority", e =>
+        {
+            e.ConfigureConsumer<CreateAuthorityConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("new_authority_permission_batch", e =>
+        {
+            e.Batch<CreateAuthorityPermissionConsumer>(b =>
+           {
+               b.MessageLimit = 20;      // Số lượng tối đa message trong một batch
+               b.TimeLimit = TimeSpan.FromSeconds(5); // Thời gian chờ tối đa để gom batch
+           });
+            e.ConfigureConsumer<CreateAuthorityPermissionConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("update_product_brand", e =>
+        {
+            e.ConfigureConsumer<UpdateProductBrandConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("save_product_search", e =>
+        {
+            e.ConfigureConsumer<SaveSearchProductConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("save_customer_search", e =>
+        {
+            e.ConfigureConsumer<SaveSearchCustomerConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("init-category", e =>
+        {
+            e.ConfigureConsumer<InitInventoryConsumer>(context);
+        });
+        cfg.ReceiveEndpoint("update-order-customer", e =>
+        {
+            e.ConfigureConsumer<UpdateOrderCustomerConsumer>(context);
+        });
+
+        cfg.ReceiveEndpoint("create_order_batch", e =>
+        {
+            e.Batch<CreateOrderBatchConsumer>(b =>
+           {
+               b.MessageLimit = 50;      // Số lượng tối đa message trong một batch
+               b.TimeLimit = TimeSpan.FromSeconds(5); // Thời gian chờ tối đa để gom batch
+           });
+            e.ConfigureConsumer<CreateOrderBatchConsumer>(context);
+        });
+
+    });
+
+    x.AddConsumer<CreateAuthorityConsumer>();
+    x.AddConsumer<UpdateProductBrandConsumer>();
+    x.AddConsumer<CreateAuthorityPermissionConsumer>();
+    x.AddConsumer<SaveSearchProductConsumer>();
+    x.AddConsumer<InitInventoryConsumer>();
+    x.AddConsumer<SaveSearchCustomerConsumer>();
+    x.AddConsumer<UpdateOrderCustomerConsumer>();
+    x.AddConsumer<CreateOrderBatchConsumer>();
 });
 
 

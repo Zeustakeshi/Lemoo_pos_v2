@@ -13,6 +13,7 @@ using System.Text;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Newtonsoft.Json.Linq;
+using MassTransit;
 
 namespace Lemoo_pos.Services
 {
@@ -28,7 +29,8 @@ namespace Lemoo_pos.Services
         IOtpService otpService,
         IHttpContextAccessor httpContextAccessor,
         ISessionService sessionService,
-        IBranchService branchService
+        IBranchService branchService,
+        IPublishEndpoint publishEndpoint
     ) : IAuthService
     {
 
@@ -40,18 +42,16 @@ namespace Lemoo_pos.Services
 
         private readonly AppDbContext _db = db;
         private readonly PasswordHelper _passwordHelper = passwordHelper;
-        private readonly StackExchange.Redis.IDatabase _redis = redis.GetDatabase();
+        private readonly IDatabase _redis = redis.GetDatabase();
         private readonly IStoreService _storeService = storeService;
         private readonly IAuthorityService _authorityService = authorityService;
         private readonly IAccountService _accountSerivce = accountService;
         private readonly IMailService _mailService = mailService;
-        private readonly IWebHostEnvironment _hostEnvironment = hostEnvironment;
         private readonly IOtpService _otpService = otpService;
-        private readonly string serverBaseUrl = Environment.GetEnvironmentVariable("BASE_URL") ?? "https://localhost:7278";
         private readonly HttpContext _httpContext = httpContextAccessor.HttpContext;
         private readonly ISessionService _sessionService = sessionService;
         private readonly IBranchService _branchService = branchService;
-
+        private readonly IPublishEndpoint _publishEndpoint = publishEndpoint;
 
         public async Task<string> CreateAccount(RegisterStoreViewModel model)
         {
@@ -129,33 +129,22 @@ namespace Lemoo_pos.Services
             return otpCode;
         }
 
-        public Account VerifyAccountCreationOtp(string code, string plainOtp)
+        public async Task<Account> VerifyAccountCreationOtp(string code, string plainOtp)
         {
-            string confirmationJsonData = _redis.StringGet(code).ToString();
-
-            if (confirmationJsonData == null)
-            {
-                throw new Exception("OTP không hợp lệ. Vui lòng thử lại sau.");
-            }
-
+            // Verify the OTP and retrieve the deserialized data object (of type CreateStoreComfirmation)
             CreateStoreComfirmation confirmation = VerifyOtpAndRetrieveData<CreateStoreComfirmation>(code, plainOtp);
 
-            // save account to database
+            // Create and save a new store in the database
+            Store newStore = await _storeService.CreateNewStore(confirmation.StoreName);
 
-            Store newStore = _storeService.CreateNewStore(confirmation.StoreName);
-
+            //TODO: can update to async
+            // Create a default branch for the newly created store, using the email and phone from confirmation data
             Branch defaultBranch = _branchService.CreateDefaultBranch(newStore, confirmation.Email, confirmation.Phone);
 
-            _authorityService.InitNewStoreAuthority(newStore);
+            // Initialize store authorities for the new store
+            Authority storeOwnerAuthority = await _authorityService.InitNewStoreAuthority(newStore);
 
-
-            Authority storeOwnerAuthority = _db.Authorities.Single(a => a.Name == "Chủ cửa hàng" && a.Store.Id == newStore.Id);
-
-            if (storeOwnerAuthority == null)
-            {
-                throw new Exception("Store owner authority is not found");
-            }
-
+            // Create a new account for the store owner using the provided confirmation data
             Account newAccount = _accountSerivce.CreateAccount(
                 email: confirmation.Email,
                 phone: confirmation.Phone,
@@ -163,26 +152,31 @@ namespace Lemoo_pos.Services
                 password: confirmation.Password,
                 store: newStore,
                 isActive: true,
-                authorities: [storeOwnerAuthority]
+                authorities: [storeOwnerAuthority] // Assign the store owner authority
             );
 
+            // Create a new staff record for the store owner linked to the default branch
             Staff staff = new()
             {
                 Account = newAccount,
                 AccountId = newAccount.Id,
                 Branch = defaultBranch,
-                Status = Common.Enums.StaffStatus.ACTIVE
+                Status = StaffStatus.ACTIVE // Set staff status to active
             };
 
+            // Add the new staff record to the database
             _db.Staffs.Add(staff);
 
+            // Save all changes to the database
             _db.SaveChanges();
 
+            // Save the authentication session for the new account and store
             _sessionService.SaveAuthSession(newAccount, newStore);
 
+            // Return the newly created account
             return newAccount;
-
         }
+
 
 
         public Account Login(LoginViewModel model)

@@ -7,6 +7,8 @@ using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using MassTransit;
+using Lemoo_pos.Messages;
 
 namespace Lemoo_pos.Areas.Api.Services
 {
@@ -17,13 +19,15 @@ namespace Lemoo_pos.Areas.Api.Services
         private readonly ISessionService _sessionService;
         private readonly IInventoryService _inventoryService;
         private readonly IElasticsearchService _elasticsearchService;
+        private readonly IPublishEndpoint _publishEndpoint;
 
         public ProductServiceApi(
             ICloudinaryService cloudinaryService,
             AppDbContext db,
             ISessionService sessionService,
             IInventoryService inventoryService,
-            IElasticsearchService elasticsearchService
+            IElasticsearchService elasticsearchService,
+            IPublishEndpoint publishEndpoint
         )
         {
             _cloudinaryService = cloudinaryService;
@@ -31,16 +35,17 @@ namespace Lemoo_pos.Areas.Api.Services
             _inventoryService = inventoryService;
             _sessionService = sessionService;
             _elasticsearchService = elasticsearchService;
+            _publishEndpoint = publishEndpoint;
         }
 
 
         public async Task<ProductResponseDto> CreateProduct(CreateProductDto dto, long accountId, long storeId)
         {
 
-            Store store = _db.Stores.Single(s => s.Id.Equals(storeId)) ?? throw new Exception("Store not found");
+            Store store = _db.Stores.FirstOrDefault(s => s.Id.Equals(storeId)) ?? throw new Exception("Store not found");
             Staff staff = _db.Staffs
                 .Include(s => s.Account)
-                .Single(s => s.Account.Id.Equals(accountId));
+                .FirstOrDefault(s => s.Account.Id.Equals(accountId)) ?? throw new KeyNotFoundException("Staff not found");
 
             Product product = new()
             {
@@ -51,7 +56,7 @@ namespace Lemoo_pos.Areas.Api.Services
 
             _db.Products.Add(product);
 
-
+            await _db.SaveChangesAsync();
             var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
 
 
@@ -89,16 +94,17 @@ namespace Lemoo_pos.Areas.Api.Services
             };
 
             var newProductVariant = _db.ProductVariants.Add(productVariant).Entity;
-
+            _db.SaveChanges();
             try
             {
-                _inventoryService.CreateInventory(
-                     newProductVariant,
-                     branch,
-                     dto.Quantity,
-                     dto.Quantity,
-                     staff: staff
-                 );
+                await _publishEndpoint.Publish(new InitInventoryMessage()
+                {
+                    Available = dto.Quantity,
+                    Quantity = dto.Quantity,
+                    BranchId = branch.Id,
+                    ProductVariantId = newProductVariant.Id,
+                    StaffId = staff.Id
+                });
             }
             catch (Exception ex)
             {
@@ -120,7 +126,7 @@ namespace Lemoo_pos.Areas.Api.Services
             _db.SaveChanges();
 
 
-            await _elasticsearchService.SaveDocumentById(new ProductSearchDto()
+            await _publishEndpoint.Publish(new SaveSearchProductMessage()
             {
                 Id = product.Id,
                 VariantId = newProductVariant.Id,
@@ -134,7 +140,7 @@ namespace Lemoo_pos.Areas.Api.Services
                 Image = product.Image,
                 Keyword = LanguageHelper.RemoveVietnameseTones(product.Name + " " + "Mặc định"),
                 AllowNegativeInventory = dto.AllowNegativeInventory
-            }, newProductVariant.Id.ToString(), "products");
+            });
 
             return new()
             {

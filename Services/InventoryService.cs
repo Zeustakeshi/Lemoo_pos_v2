@@ -23,9 +23,12 @@ namespace Lemoo_pos.Services
             _elasticsearchService = elasticsearchService;
         }
 
-        public Inventory CreateInventory(ProductVariant productVariant, Branch branch, long quantity, long available, Staff staff)
+        public async Task<Inventory> CreateInventory(long productVariantId, long branchId, long quantity, long available, long staffId)
         {
 
+            Staff staff = _db.Staffs.FirstOrDefault(staff => staff.Id == staffId) ?? throw new Exception($"Staff {staffId} not found");
+            Branch branch = _db.Branches.FirstOrDefault(branch => branch.Id == branchId) ?? throw new Exception($"Branch {branchId} not found");
+            ProductVariant productVariant = _db.ProductVariants.FirstOrDefault(variant => variant.Id == productVariantId) ?? throw new Exception($"Variant {productVariantId} not found");
 
             Inventory inventory = new()
             {
@@ -35,9 +38,6 @@ namespace Lemoo_pos.Services
                 Branch = branch,
                 Quantity = quantity,
             };
-
-
-
 
             var newInventory = _db.Inventories.Add(inventory).Entity;
 
@@ -56,10 +56,12 @@ namespace Lemoo_pos.Services
 
             _db.InventoryLogs.Add(log);
 
-            _db.SaveChanges();
+            await _db.SaveChangesAsync();
 
             return inventory;
         }
+
+
 
         public List<InventoryHistoryViewModel> GetInventoryHistories(long productVariantId)
         {
@@ -136,7 +138,6 @@ namespace Lemoo_pos.Services
             }, inventory.ProductVariant.ProductId.ToString(), "products");
 
         }
-
 
         private string GetInventoryLogAction(string reason)
         {

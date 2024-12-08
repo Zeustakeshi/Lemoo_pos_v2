@@ -5,6 +5,7 @@ using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Models.ViewModels;
 using Lemoo_pos.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Nest;
 using System.Security;
 
 namespace Lemoo_pos.Services
@@ -35,6 +36,25 @@ namespace Lemoo_pos.Services
             _passworHelper = passwordHelper;
             _mailService = mailService;
             _authService = authService;
+        }
+
+        public async Task CreateStaffAsync(long accountId, long branchId, StaffStatus status)
+        {
+            Branch branch = _db.Branches.FirstOrDefault(b => b.Id == branchId) ?? throw new Exception($"Branch {branchId} not found");
+            Account account = _db.Accounts.FirstOrDefault(a => a.Id == accountId) ?? throw new Exception($"Account {accountId} not found");
+
+            Staff staff = new()
+            {
+                Account = account,
+                AccountId = account.Id,
+                Status = StaffStatus.ACTIVE,
+                Branch = branch
+            };
+
+            // Add the new staff record to the database
+            _db.Staffs.Add(staff);
+
+            await _db.SaveChangesAsync();
         }
 
         public List<Staff> GetAllStaff(long storeId)

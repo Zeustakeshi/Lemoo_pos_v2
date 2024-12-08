@@ -6,5 +6,6 @@ namespace Lemoo_pos.Areas.Api.Services.Interfaces
     {
         Task<OrderResponseDto> CreateOrder(CreateOrderDto dto, long storeId, long accountId);
         void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId);
+        Task UpdateOrderCustomer(long orderId, long customerId);
     }
 }

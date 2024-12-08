@@ -3,8 +3,10 @@ using Lemoo_pos.Areas.Api.Services.Interfaces;
 using Lemoo_pos.Common.Enums;
 using Lemoo_pos.Data;
 using Lemoo_pos.Helper;
+using Lemoo_pos.Messages;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
+using MassTransit;
 
 namespace Lemoo_pos.Areas.Api.Services
 {
@@ -12,11 +14,13 @@ namespace Lemoo_pos.Areas.Api.Services
     {
         private readonly AppDbContext _db;
         private readonly IElasticsearchService _elasticsearchService;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public CustomerServiceApi(AppDbContext db, IElasticsearchService elasticsearchService)
+        public CustomerServiceApi(AppDbContext db, IElasticsearchService elasticsearchService, IPublishEndpoint publishEndpoint)
         {
             _db = db;
             _elasticsearchService = elasticsearchService;
+            _publishEndpoint = publishEndpoint;
         }
 
         public CustomerResponseDto CreateCustomer(CreateCustomerDto dto, long storeId, long accountId)
@@ -68,7 +72,7 @@ namespace Lemoo_pos.Areas.Api.Services
 
             // save customer to elasticsearch 
 
-            _elasticsearchService.SaveDocumentById(new CustomerSearchDto()
+            _publishEndpoint.Publish(new SaveSearchCustomerMessage()
             {
                 Id = newCustomer.Id,
                 Name = newCustomer.Name,
@@ -76,7 +80,7 @@ namespace Lemoo_pos.Areas.Api.Services
                 StoreId = storeId,
                 Email = newCustomer.Email,
                 Keyword = LanguageHelper.RemoveVietnameseTones(newCustomer.Name)
-            }, newCustomer.Id.ToString(), "customers");
+            });
 
             return new()
             {

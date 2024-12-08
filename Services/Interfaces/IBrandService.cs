@@ -6,6 +6,8 @@ namespace Lemoo_pos.Services.Interfaces
     public interface IBrandService
     {
         List<Brand> GetAllBrand();
-        Brand CreateBrand (CreateBrandViewModel model);
+        Brand CreateBrand(CreateBrandViewModel model);
+
+        Task UpdateProductBrand(long productId, long brandId);
     }
 }

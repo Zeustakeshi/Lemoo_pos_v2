@@ -17,9 +17,11 @@ namespace Lemoo_pos.Services
             _sessionService = sessionService;
         }
 
-        public Store CreateNewStore(string name)
+        public async Task<Store> CreateNewStore(string name)
         {
-            return _db.Stores.Add(new() { Name = name }).Entity;
+            Store store = _db.Stores.Add(new() { Name = name }).Entity;
+            await _db.SaveChangesAsync();
+            return store;
         }
 
         public StoreOverviewViewModel GetStoreOverview()

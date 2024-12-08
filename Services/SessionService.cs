@@ -11,7 +11,8 @@ namespace Lemoo_pos.Services
         private readonly HttpContext _httpContext;
         private readonly AppDbContext _db;
 
-        public SessionService(IHttpContextAccessor httpContextAccessor, AppDbContext db) {
+        public SessionService(IHttpContextAccessor httpContextAccessor, AppDbContext db)
+        {
             _httpContext = httpContextAccessor.HttpContext;
             _db = db;
         }
@@ -35,7 +36,7 @@ namespace Lemoo_pos.Services
             return store ?? throw new Exception("Store not found. ");
         }
 
-        public void SaveAuthSession (Account account, Store store)
+        public void SaveAuthSession(Account account, Store store)
         {
             Staff staff = _db.Staffs.Single(s => s.Id == account.Id);
 
@@ -46,9 +47,10 @@ namespace Lemoo_pos.Services
             _httpContext.Session.SetString("Avatar", account.Avatar ?? "");
             _httpContext.Session.SetString("StoreName", store.Name);
             _httpContext.Session.SetString("StoreId", store.Id.ToString());
+
         }
 
-        public Staff GetStaffSession ()
+        public Staff GetStaffSession()
         {
             long staffId = Convert.ToInt64(_httpContext.Session.GetString("StaffId"));
 
@@ -57,6 +59,6 @@ namespace Lemoo_pos.Services
             return staff ?? throw new Exception("Store not found. ");
         }
 
-      
+
     }
 }

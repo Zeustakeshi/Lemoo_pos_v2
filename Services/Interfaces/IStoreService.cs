@@ -5,7 +5,7 @@ namespace Lemoo_pos.Services.Interfaces
 {
     public interface IStoreService
     {
-        Store CreateNewStore(string name);
+        Task<Store> CreateNewStore(string name);
 
         StoreOverviewViewModel GetStoreOverview();
     }
