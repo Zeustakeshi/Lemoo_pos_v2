@@ -79,8 +79,8 @@ async function syncOrders() {
         if (!accessToken) {
             console.log("[SW] Unauthorized to synchronize.");
         }
-        console.log({ orders });
-        const chunks = chunkArray(orders, 10);
+
+        const chunks = chunkArray(orders, 50);
 
         for (const chunk of chunks) {
             try {
@@ -121,7 +121,6 @@ self.addEventListener("message", (event) => {
 
     if (event.data && event.data.type === "SEND_ACCESS_TOKEN") {
         accessToken = event.data.message;
-        console.log({ accessToken });
     }
 });
 

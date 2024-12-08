@@ -21,6 +21,14 @@ namespace Lemoo_pos.Areas.Api.Controllers
             _orderServiceApi = orderServiceApi;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllOrder()
+        {
+            var jwtData = ApiHelper.GetJwtDataDto(User);
+            List<OrderResponseDto> orderResponseDtos = await _orderServiceApi.GetAllOrder(jwtData.StoreId);
+            return Json(orderResponseDtos);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateOrder([FromBody] CreateOrderDto dto)
         {
@@ -47,6 +55,8 @@ namespace Lemoo_pos.Areas.Api.Controllers
             Response.StatusCode = 201;
             return Json("Sync order sucess");
         }
+
+
 
     }
 }

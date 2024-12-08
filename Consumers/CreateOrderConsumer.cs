@@ -12,15 +12,33 @@ namespace Lemoo_pos.Consumers
         {
             _orderServiceApi = orderServiceApi;
         }
-        public Task Consume(ConsumeContext<Batch<CreateOrderBatchMessage>> context)
+        public async Task Consume(ConsumeContext<Batch<CreateOrderBatchMessage>> context)
         {
-            List<CreateOrderDto> data = [];
-            foreach (var message in context.Message)
+            var orderGroupedByStoreId = context.Message
+              .GroupBy(order => new { storeId = order.Message.StoreId, accountId = order.Message.AccountId })
+              .Select(group => new
+              {
+                  Keys = new
+                  {
+                      StoreId = group.Key.storeId,
+                      AccountId = group.Key.accountId
+                  },
+                  Orders = group.Select((order) => new CreateOrderDto()
+                  {
+                      BranchId = order.Message.BranchId,
+                      Change = order.Message.Change,
+                      Items = order.Message.Items,
+                      PaymentMethod = order.Message.PaymentMethod,
+                      Total = order.Message.Total,
+                      CustomerId = order.Message.CustomerId,
+                      Description = order.Message.Description
+                  }).ToList()
+              });
+
+            foreach (var group in orderGroupedByStoreId)
             {
-                data.Add(message.Message);
+                await _orderServiceApi.CreateOrderBatchAsync(group.Orders, group.Keys.StoreId, group.Keys.AccountId);
             }
-            // _orderServiceApi.CreateOrderBatch(data);
-            throw new NotImplementedException();
         }
     }
 }

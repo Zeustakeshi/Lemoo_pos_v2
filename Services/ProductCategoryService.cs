@@ -14,8 +14,8 @@ namespace Lemoo_pos.Services
         private readonly AppDbContext _db;
         private readonly HttpContext _httpContext;
         public ProductCategoryService(
-            AppDbContext db, 
-            IHttpContextAccessor httpContextAccessor, 
+            AppDbContext db,
+            IHttpContextAccessor httpContextAccessor,
             ISessionService sessionService
          )
         {
@@ -52,15 +52,13 @@ namespace Lemoo_pos.Services
 
             _db.SaveChanges();
 
-            if (!model.AddProductManual) AddProductToCategory(newCategory.Id, model.Conditions, model.MatchAllCondition);
+            if (!model.AddProductManual) AddProductToCategory(newCategory.Id, store.Id, model.Conditions, model.MatchAllCondition);
 
         }
 
-
-
-        private async Task AddProductToCategory(long categoryId, List<CreateCategoryCondition> conditions, bool isMatchAll)
+        private async Task AddProductToCategory(long categoryId, long storeId, List<CreateCategoryCondition> conditions, bool isMatchAll)
         {
-            IQueryable<Product> query = _db.Products;
+            IQueryable<Product> query = _db.Products.Where(product => product.Store.Id == storeId);
 
             foreach (var condition in conditions)
             {
@@ -82,7 +80,7 @@ namespace Lemoo_pos.Services
             }
 
         }
-    
+
 
         private IQueryable<Product> ApplyFilter(IQueryable<Product> query, CreateCategoryCondition condition)
         {
@@ -98,7 +96,7 @@ namespace Lemoo_pos.Services
                     else if (condition.Condition == "START_WITH")
                         query = query.Where(product => product.Name.StartsWith(condition.Value));
                     break;
-               
+
             }
             return query;
         }

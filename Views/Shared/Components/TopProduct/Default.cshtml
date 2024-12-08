@@ -1,90 +1,66 @@
 @model List<Lemoo_pos.Models.ViewModels.TopProductViewModel>
     <div class="col-8">
-        <div class="card card-block card-stretch card-height">
+       
+        <div class="card card-block card-height">
             <div
                 class="card-header d-flex align-items-center justify-content-between"
             >
                 <div class="header-title">
                     <h4 class="card-title">Sản phẩm nổi bật</h4>
                 </div>
-                @*
-                <div class="card-header-toolbar d-flex align-items-center">
-                    <div class="dropdown">
-                        <span
-                            class="dropdown-toggle dropdown-bg btn"
-                            id="dropdownMenuButton006"
-                            data-toggle="dropdown"
-                        >
-                            This Month<i class="ri-arrow-down-s-line ml-1"></i>
-                        </span>
-                        <div
-                            class="dropdown-menu dropdown-menu-right shadow-none"
-                            aria-labelledby="dropdownMenuButton006"
-                        >
-                            <a class="dropdown-item" href="#">Year</a>
-                            <a class="dropdown-item" href="#">Month</a>
-                            <a class="dropdown-item" href="#">Week</a>
-                        </div>
-                    </div>
-                </div>
-                *@
             </div>
-            <div class="card-body">
-                <ul class="list-unstyled row top-product mb-0">
-                    @foreach (var product in Model) {
-                    <li class="col-lg-3">
-                        <div
-                            class="card card-block card-stretch card-height mb-0"
-                        >
-                            <div class="">
-                                <div class="rounded" style="overflow: hidden">
-                                    <img
-                                        src="@product.Image"
-                                        class="style-img img-fluid m-auto"
-                                        alt="image"
-                                    />
-                                </div>
-                                <div
-                                    class="my-3"
-                                    style="color: black; padding: 0 20px"
-                                >
-                                    <p
-                                        class=""
-                                        style="
-                                            color: black;
-                                            text-align: center;
-                                            margin-bottom: 20px;
-                                            font-size: 18px;
-                                            font-weight: 600;
-                                        "
+         @foreach (var product in Model) {
+             <li class="col-lg-3" style="min-width: 100px;">
+                            <div
+                                class="card card-block  card-height mb-0"
+                            >
+                                <div class="" >
+                                    <div class="rounded" style="overflow: hidden">
+                                        <img
+                                            src="@product.Image"
+                                            class="style-img img-fluid m-auto"
+                                            alt="image"
+                                        />
+                                    </div>
+                                    <div
+                                        class="my-3"
+                                        style="color: black; padding: 0 20px"
                                     >
-                                        @product.Name
-                                    </p>
-                                    <div style="font-size: 14px">
-                                        <p class="mb-0" style="color: black">
-                                            Biến thể: @product.VariantName
-                                        </p>
-                                        <p class="mb-0">
-                                            Số lượng bán: @product.TotalSale
-                                        </p>
                                         <p
-                                            class="mb-0"
-                                            id="store-overview-revenue-@product.Id"
-                                            data-value="@product.Revenue"
+                                            class=""
+                                            style="
+                                                color: black;
+                                                text-align: center;
+                                                margin-bottom: 20px;
+                                                font-size: 18px;
+                                                font-weight: 600;
+                                            "
                                         >
-                                            Doanh thu:
+                                            @product.Name
                                         </p>
+                                        <div style="font-size: 14px">
+                                            <p class="mb-0" style="color: black">
+                                                Biến thể: @product.VariantName
+                                            </p>
+                                            <p class="mb-0">
+                                                Số lượng bán: @product.TotalSale
+                                            </p>
+                                            <p
+                                                class="mb-0"
+                                                id="store-overview-revenue-@product.Id"
+                                                data-value="@product.Revenue"
+                                            >
+                                                Doanh thu:
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </li>
-                    }
-                </ul>
-            </div>
+                        </li>
+        }
         </div>
     </div>
-</Lemoo_pos.Models.ViewModels.TopProductViewModel>
+
 
 <script>
     // const formatMoney = (money) => {

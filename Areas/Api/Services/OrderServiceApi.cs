@@ -2,8 +2,11 @@ using Lemoo_pos.Areas.Api.Dto;
 using Lemoo_pos.Areas.Api.Services.Interfaces;
 using Lemoo_pos.Common.Enums;
 using Lemoo_pos.Data;
+using Lemoo_pos.Mappers;
+using Lemoo_pos.Messages;
 using Lemoo_pos.Models.Entities;
 using Lemoo_pos.Services.Interfaces;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lemoo_pos.Areas.Api.Services
@@ -12,10 +15,12 @@ namespace Lemoo_pos.Areas.Api.Services
     {
         private readonly AppDbContext _db;
         private readonly IElasticsearchService _elasticsearchService;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public OrderServiceApi(AppDbContext db, IElasticsearchService elasticsearchService)
+        public OrderServiceApi(AppDbContext db, IElasticsearchService elasticsearchService, IPublishEndpoint publishEndpoint)
         {
             _elasticsearchService = elasticsearchService;
+            _publishEndpoint = publishEndpoint;
             _db = db;
         }
 
@@ -119,22 +124,47 @@ namespace Lemoo_pos.Areas.Api.Services
                     Total = item.Total,
                 });
             }
-            return new()
-            {
-                Id = order.Id,
-                CustomerId = order.CustomerId,
-                Items = orderItemResponse,
-                PaymentMethod = order.PaymentMethod.ToString(),
-                CreatedAt = order.CreatedAt,
-                UpdatedAt = order.UpdatedAt,
-            };
+            // return new()
+            // {
+            //     Id = order.Id,
+            //     CustomerId = order.CustomerId,
+            //     CustomerName = order.Customer?.Name,
+            //     Items = orderItemResponse,
+            //     PaymentMethod = order.PaymentMethod.ToString(),
+            //     CreatedAt = order.CreatedAt,
+            //     UpdatedAt = order.UpdatedAt,
+            //     Total = order.Total
+            // };
+            return OrderMapper.OrderToOrderResponseDto(order, orderItems.Select(item => OrderMapper.OrderItemToOrderItemDto(item, null)).ToList());
         }
+
 
         public void CreateOrderBatch(List<CreateOrderDto> dtos, long storeId, long accountId)
         {
             foreach (var dto in dtos)
             {
-                CreateOrder(dto, storeId, accountId);
+                // CreateOrder(dto, storeId, accountId);
+                _publishEndpoint.Publish(new CreateOrderBatchMessage()
+                {
+                    AccountId = accountId,
+                    StoreId = storeId,
+                    BranchId = dto.BranchId,
+                    Change = dto.Change,
+                    Items = dto.Items,
+                    PaymentMethod = dto.PaymentMethod,
+                    Description = dto.Description,
+                    Total = dto.Total,
+                    CustomerId = dto.CustomerId
+                });
+            }
+
+        }
+
+        public async Task CreateOrderBatchAsync(List<CreateOrderDto> dtos, long storeId, long accountId)
+        {
+            foreach (var dto in dtos)
+            {
+                await CreateOrder(dto, storeId, accountId);
             }
         }
 
@@ -146,6 +176,22 @@ namespace Lemoo_pos.Areas.Api.Services
             order.CustomerId = customer.Id;
             _db.Orders.Update(order);
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<List<OrderResponseDto>> GetAllOrder(long storeId)
+        {
+            return await _db.Orders
+                .Where(order => order.StoreId == storeId)
+                .OrderByDescending(order => order.UpdatedAt)
+                .Include(order => order.Staff)
+                .ThenInclude(staff => staff.Account)
+                .Select(order =>
+                    OrderMapper.OrderToOrderResponseDto(order,
+                    order.OrderItems
+                    .Select(
+                        orderItem => OrderMapper.OrderItemToOrderItemDto(orderItem, null)).ToList()
+                    )
+                ).ToListAsync();
         }
 
         private async Task UpdateOrderShiftAsync(Order order, long staffId)

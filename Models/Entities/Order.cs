@@ -17,5 +17,6 @@ namespace Lemoo_pos.Models.Entities
         public string? Description { get; set; }
         public Shift? Shift { get; set; }
         public long? ShiftId { get; set; }
+        public List<OrderItem> OrderItems { get; set; } = [];
     }
 }

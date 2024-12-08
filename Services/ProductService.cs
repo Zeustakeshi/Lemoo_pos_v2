@@ -426,6 +426,7 @@ namespace Lemoo_pos.Services
                 if (group.ProductVariant == null) continue;
                 List<string> variantNames = [];
 
+
                 foreach (var attribute in group.ProductVariant.AttributeValues)
                 {
                     variantNames.Add(attribute.AttributeValue.Value);

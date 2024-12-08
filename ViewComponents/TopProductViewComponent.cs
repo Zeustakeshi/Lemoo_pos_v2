@@ -16,6 +16,7 @@ namespace Lemoo_pos.ViewComponents
         public IViewComponentResult Invoke()
         {
             var topProducts = _productService.GetTopProducts(4);
+            System.Console.WriteLine(topProducts.Count());
             return View(topProducts);
         }
     }

@@ -52,6 +52,7 @@ namespace Lemoo_pos.Services
         {
             var now = DateTime.UtcNow.Date; // Chỉ lấy phần ngày
             var sevenDaysAgo = now.AddDays(-7);
+            long storeId = _sessionService.GetStoreIdSession();
 
             // Tạo danh sách các ngày từ sevenDaysAgo đến now
             var allDates = Enumerable.Range(0, 8) // 8 ngày: từ ngày 0 đến ngày 7
@@ -60,7 +61,7 @@ namespace Lemoo_pos.Services
 
             // Truy vấn doanh thu từ cơ sở dữ liệu
             var salesData = _db.Orders
-                .Where(order => order.CreatedAt.Date >= sevenDaysAgo && order.CreatedAt.Date <= now)
+                .Where(order => order.CreatedAt.Date >= sevenDaysAgo && order.CreatedAt.Date <= now && order.StoreId == storeId)
                 .GroupBy(order => order.CreatedAt.Date)
                 .Select(group => new SalesOverviewViewModel()
                 {
