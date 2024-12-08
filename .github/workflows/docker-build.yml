@@ -7,11 +7,6 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-        env:
-            DB_URL: ${{ secrets.AUTH_DATABASE_URL }}
-            DB_USER: ${{ secrets.AUTH_DB_USER }}
-            DB_PASSWORD: ${{ secrets.AUTH_DB_PASSWORD }}
-            REDIS_URL: ${{ secrets.AUTH_REDIS_URL }}
         steps:
             # Checkout source code
             - name: Checkout code
