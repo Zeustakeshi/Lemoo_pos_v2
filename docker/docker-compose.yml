@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+    loadbalancer:
+        image: nginx:latest
+        ports:
+            - "80:80"
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - lemoo_network
+        deploy:
+            replicas: 1
+        restart: always
+    app:
+        image: zeustakeshi/lemoo-pos:latest
+        container_name: lemoo_pos
+        ports:
+            - "${APP_PORT}:8080" # Map cổng từ file .env
+        env_file:
+            - ./.env
+        networks:
+            - lemoo_network
+        deploy:
+            replicas: 2
+        restart: unless-stopped
+networks:
+    lemoo_network:
+        driver: overlay

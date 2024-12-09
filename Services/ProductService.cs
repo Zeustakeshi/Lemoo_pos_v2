@@ -125,7 +125,6 @@ namespace Lemoo_pos.Services
             }
 
 
-
             // Create a list of attribute values to be associated with the product
             var attributeValues = new List<(string Id, ProductAttributeValue attributeValue)>();
 
@@ -364,7 +363,6 @@ namespace Lemoo_pos.Services
                 .Where(v => v.Id == variantId && v.ProductId == productId && v.Product.Store.Id == storeId)
                 .Single() ?? throw new Exception("Không tìm thấy biến thể này");
 
-
             variant.SkuCode = model.SkuCode;
             variant.BarCode = model.BarCode;
             variant.CostPrice = model.CostPrice;
@@ -388,14 +386,14 @@ namespace Lemoo_pos.Services
 
             await _elasticsearchService.SaveDocumentById(new
             {
-                product.Id,
+                Id = variant.Id,
                 VariantId = updatedProductVariant.Id,
-                updatedProductVariant.Product.Name,
+                VariantName = updatedProductVariant.Product.Name,
                 Price = updatedProductVariant.SellingPrice,
-                updatedProductVariant.SkuCode,
-                updatedProductVariant.Image,
-                updatedProductVariant.AllowNegativeInventory,
-            }, updatedProductVariant.Id.ToString(), "products");
+                SkuCode = updatedProductVariant.SkuCode,
+                Image = updatedProductVariant.Image,
+                AllowNegativeInventory = updatedProductVariant.AllowNegativeInventory,
+            }, variantId.ToString(), "products");
 
             _db.SaveChanges();
         }

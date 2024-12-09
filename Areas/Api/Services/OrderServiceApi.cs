@@ -185,6 +185,7 @@ namespace Lemoo_pos.Areas.Api.Services
                 .OrderByDescending(order => order.UpdatedAt)
                 .Include(order => order.Staff)
                 .ThenInclude(staff => staff.Account)
+                .Take(100)
                 .Select(order =>
                     OrderMapper.OrderToOrderResponseDto(order,
                     order.OrderItems

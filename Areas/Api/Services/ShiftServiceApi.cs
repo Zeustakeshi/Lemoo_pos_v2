@@ -146,6 +146,7 @@ namespace Lemoo_pos.Areas.Api.Services
             if (!existedShift) throw new KeyNotFoundException($"Shift {shiftId} not found");
 
             return [.._db.Orders.Where(o => o.StoreId == storeId && o.ShiftId == shiftId)
+            .Take(100)
             .Select(order => new ShiftOrderResponseDto()
             {
                 Id = order.Id,
