@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+    app:
+        image: zeustakeshi/lemoo-pos:latest
+        container_name: lemoo_pos
+        ports:
+            - "${APP_PORT}:8080" # Map cổng từ file .env
+        environment:
+            DB_HOST: ${DB_HOST}
+            DB_PORT: ${DB_PORT}
+            DB_USER: ${DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD}
+        env_file:
+            - ./.env
+        restart: unless-stopped
