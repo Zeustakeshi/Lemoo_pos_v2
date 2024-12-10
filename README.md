@@ -45,7 +45,7 @@
 
 ## Thiết kế hệ thống
 
-**Database:** [Thiết kế database]()
+**Database:** [Thiết kế database](https://dbdocs.io/minhhieu.dev.j/Lemoo_pos?table=InventoryLog&schema=public&view=table_structure)
 
 ![alt text](Screenshots/image-20.png)
 
