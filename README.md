@@ -2,27 +2,27 @@
 
 ## Hệ thống quản lý cửa hàng tạp hóa và siêu thị mini
 
--   [Lemoo POS](#lemoo-pos)
-    -   [Hệ thống quản lý cửa hàng tạp hóa và siêu thị mini](#hệ-thống-quản-lý-cửa-hàng-tạp-hóa-và-siêu-thị-mini)
-    -   [Tính năng nổi bật](#tính-năng-nổi-bật)
-    -   [Công nghệ sử dụng](#công-nghệ-sử-dụng)
-    -   [Thiết kế hệ thống](#thiết-kế-hệ-thống)
-    -   [Cách chạy ứng dụng](#cách-chạy-ứng-dụng)
-        -   [Chạy ứng dụng với docker](#chạy-ứng-dụng-với-docker)
-        -   [Chạy ứng dụng trực tiếp](#chạy-ứng-dụng-trực-tiếp)
-            -   [Đảm bảo đã cài đặt đủ môi trường để chạy ứng dụng](#đảm-bảo-đã-cài-đặt-đủ-môi-trường-để-chạy-ứng-dụng)
-            -   [Các bước chạy ứng dụng](#các-bước-chạy-ứng-dụng)
-    -   [Giao diện ứng dụng](#giao-diện-ứng-dụng)
-        -   [Giao diện trang chủ](#giao-diện-trang-chủ)
-        -   [Giao diện quản lý sản phẩm](#giao-diện-quản-lý-sản-phẩm)
-        -   [Giao diện quản lý danh mục sản phẩm](#giao-diện-quản-lý-danh-mục-sản-phẩm)
-        -   [Giao diện quản lý nhân viên](#giao-diện-quản-lý-nhân-viên)
-        -   [Giao diện quản lý chi nhánh](#giao-diện-quản-lý-chi-nhánh)
-        -   [Giao diện bán hàng tại quầy](#giao-diện-bán-hàng-tại-quầy)
-        -   [Giao diện quản lý ca bán hàng](#giao-diện-quản-lý-ca-bán-hàng)
-        -   [Giao diện tra cứu tồn kho](#giao-diện-tra-cứu-tồn-kho)
-        -   [Giao diện thông tin đơn hàng](#giao-diện-thông-tin-đơn-hàng)
-        -   [Giao diện đồng bộ đơn hàng](#giao-diện-đồng-bộ-đơn-hàng)
+- [Lemoo POS](#lemoo-pos)
+  - [Hệ thống quản lý cửa hàng tạp hóa và siêu thị mini](#hệ-thống-quản-lý-cửa-hàng-tạp-hóa-và-siêu-thị-mini)
+  - [Tính năng nổi bật](#tính-năng-nổi-bật)
+  - [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+  - [Thiết kế hệ thống](#thiết-kế-hệ-thống)
+  - [Cách chạy ứng dụng](#cách-chạy-ứng-dụng)
+      - [Chạy ứng dụng với docker](#chạy-ứng-dụng-với-docker)
+      - [Chạy ứng dụng trực tiếp](#chạy-ứng-dụng-trực-tiếp)
+        - [Đảm bảo đã cài đặt đủ môi trường để chạy ứng dụng](#đảm-bảo-đã-cài-đặt-đủ-môi-trường-để-chạy-ứng-dụng)
+        - [Các bước chạy ứng dụng](#các-bước-chạy-ứng-dụng)
+  - [Giao diện ứng dụng](#giao-diện-ứng-dụng)
+    - [Giao diện trang chủ](#giao-diện-trang-chủ)
+    - [Giao diện quản lý sản phẩm](#giao-diện-quản-lý-sản-phẩm)
+    - [Giao diện quản lý danh mục sản phẩm](#giao-diện-quản-lý-danh-mục-sản-phẩm)
+    - [Giao diện quản lý nhân viên](#giao-diện-quản-lý-nhân-viên)
+    - [Giao diện quản lý chi nhánh](#giao-diện-quản-lý-chi-nhánh)
+    - [Giao diện bán hàng tại quầy](#giao-diện-bán-hàng-tại-quầy)
+    - [Giao diện quản lý ca bán hàng](#giao-diện-quản-lý-ca-bán-hàng)
+    - [Giao diện tra cứu tồn kho](#giao-diện-tra-cứu-tồn-kho)
+    - [Giao diện thông tin đơn hàng](#giao-diện-thông-tin-đơn-hàng)
+    - [Giao diện đồng bộ đơn hàng](#giao-diện-đồng-bộ-đơn-hàng)
 
 ## Tính năng nổi bật
 
@@ -69,7 +69,7 @@ docker run --env-file .env -p 7278:7278 zeustakeshi/lemoo-pos:latest
 
 ##### Các bước chạy ứng dụng
 
-Bước 1: Clone dự án
+**Bước 1:** Clone dự án
 Sử dụng Git để clone mã nguồn về máy tính của bạn:
 
 ```bash
@@ -77,14 +77,20 @@ git clone https://github.com/Zeustakeshi/Lemoo_pos_v2.git
 cd Lemoo_pos_v2
 ```
 
-Bước 2: Khôi phục gói nuget
+**Bước 2:** Khôi phục gói nuget
 Chạy lệnh sau để khôi phục các gói cần thiết cho dự án:
+
+```bash
+   dotnet ef database update
+```
+
+**Bước 3:** Khởi tạo database
 
 ```bash
    dotnet restore
 ```
 
-Bước 3: Chạy ứng dụng
+**Bước 4:** Chạy ứng dụng
 
 ```bash
    dotnet run
