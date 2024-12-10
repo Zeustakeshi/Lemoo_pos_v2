@@ -81,13 +81,13 @@ cd Lemoo_pos_v2
 Chạy lệnh sau để khôi phục các gói cần thiết cho dự án:
 
 ```bash
-   dotnet ef database update
+   dotnet restore
 ```
 
 **Bước 3:** Khởi tạo database
 
 ```bash
-   dotnet restore
+   dotnet ef database update
 ```
 
 **Bước 4:** Chạy ứng dụng
